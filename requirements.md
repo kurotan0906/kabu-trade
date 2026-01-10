@@ -729,14 +729,9 @@ class StockDataProvider(ABC):
 #### 5.8.2 エラーコード
 - `STOCK_NOT_FOUND`: 銘柄が見つからない
 - `EXTERNAL_API_ERROR`: 外部APIエラー
-  - `KABU_STATION_API_ERROR`: kabuステーションAPIエラー
-  - `KABU_STATION_AUTH_ERROR`: kabuステーションAPI認証エラー
-  - `KABU_STATION_RATE_LIMIT`: kabuステーションAPIレート制限超過
-  - `MARKET_CLOSED`: 市場休場中
 - `EVALUATION_FAILED`: 評価処理失敗
 - `STRATEGY_NOT_FOUND`: 投資方針が見つからない
 - `VALIDATION_ERROR`: バリデーションエラー
-- `CACHE_ERROR`: キャッシュエラー
 
 ### 5.9 セキュリティ設計
 
@@ -866,10 +861,21 @@ class StockDataProvider(ABC):
 
 ## 8. 今後の検討事項
 
-- ユーザー認証・認可機能
+### Phase 2以降で検討
+- **世界株対応**: 米国株、欧州株等の対応
+  - データソース: yfinance、Alpha Vantage等の検討
+- **フォールバックプロバイダー**: yfinance等の実装
+  - kabuステーションAPI障害時の代替手段
+
+### 将来の拡張機能
+- ユーザー認証・認可機能（複数ユーザー対応）
 - ポートフォリオ管理機能
-- アラート・通知機能
+- アラート・通知機能（価格アラート等）
 - バックテスト機能
 - 機械学習による予測機能
 - モバイルアプリ対応
 
+### 個人利用向けの最適化
+- ローカル開発環境の構築（Docker Compose）
+- AWS無料枠内での運用（月額$0）
+- 個人利用に最適化されたUI/UX
