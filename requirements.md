@@ -729,9 +729,14 @@ class StockDataProvider(ABC):
 #### 5.8.2 エラーコード
 - `STOCK_NOT_FOUND`: 銘柄が見つからない
 - `EXTERNAL_API_ERROR`: 外部APIエラー
+  - `KABU_STATION_API_ERROR`: kabuステーションAPIエラー
+  - `KABU_STATION_AUTH_ERROR`: kabuステーションAPI認証エラー
+  - `KABU_STATION_RATE_LIMIT`: kabuステーションAPIレート制限超過
+  - `MARKET_CLOSED`: 市場休場中
 - `EVALUATION_FAILED`: 評価処理失敗
 - `STRATEGY_NOT_FOUND`: 投資方針が見つからない
 - `VALIDATION_ERROR`: バリデーションエラー
+- `CACHE_ERROR`: キャッシュエラー
 
 ### 5.9 セキュリティ設計
 
