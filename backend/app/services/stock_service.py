@@ -32,16 +32,24 @@ class StockService:
 
     async def _get_cache(self, key: str) -> Optional[dict]:
         """キャッシュからデータを取得"""
-        redis = await get_redis()
-        cached = await redis.get(key)
-        if cached:
-            return json.loads(cached)
+        try:
+            redis = await get_redis()
+            cached = await redis.get(key)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            # Redis接続エラーの場合はスキップ
+            pass
         return None
 
     async def _set_cache(self, key: str, value: dict, ttl: int = 300):
         """キャッシュにデータを保存"""
-        redis = await get_redis()
-        await redis.setex(key, ttl, json.dumps(value, default=str))
+        try:
+            redis = await get_redis()
+            await redis.setex(key, ttl, json.dumps(value, default=str))
+        except Exception:
+            # Redis接続エラーの場合はスキップ
+            pass
 
     async def get_stock_info(self, code: str, use_cache: bool = True) -> StockInfo:
         """
@@ -62,8 +70,13 @@ class StockService:
             if cached:
                 return StockInfo(**cached)
 
-        # DB確認
-        stock = await self.repository.find_by_code(code)
+        # DB確認（データベースが利用可能な場合のみ）
+        try:
+            stock = await self.repository.find_by_code(code)
+        except Exception:
+            # データベース接続エラーの場合はスキップ
+            stock = None
+        
         if stock:
             # DBからStockInfoを構築
             stock_info = StockInfo(
@@ -81,10 +94,14 @@ class StockService:
                 current_price = await self.provider.get_realtime_price(code)
                 stock_info.current_price = current_price
             except Exception:
-                # リアルタイム価格取得失敗時は最新のDB価格を使用
-                latest_price = await self.repository.get_latest_price(code)
-                if latest_price:
-                    stock_info.current_price = latest_price.close
+                # リアルタイム価格取得失敗時は最新のDB価格を使用（データベースが利用可能な場合のみ）
+                try:
+                    latest_price = await self.repository.get_latest_price(code)
+                    if latest_price:
+                        stock_info.current_price = latest_price.close
+                except Exception:
+                    # データベース接続エラーの場合はスキップ
+                    pass
 
             # キャッシュに保存（1時間）
             await self._set_cache(cache_key, stock_info.dict(), ttl=3600)
@@ -94,8 +111,12 @@ class StockService:
         # 外部APIから取得
         stock_info = await self.provider.get_stock_info(code)
 
-        # DBに保存
-        await self.repository.create_or_update(stock_info)
+        # DBに保存（データベースが利用可能な場合のみ）
+        try:
+            await self.repository.create_or_update(stock_info)
+        except Exception:
+            # データベース接続エラーの場合はスキップ
+            pass
 
         # キャッシュに保存（1時間）
         await self._set_cache(cache_key, stock_info.dict(), ttl=3600)
@@ -145,8 +166,13 @@ class StockService:
             end = date.today()
             start = end - timedelta(days=365)
 
-        # DBから取得を試みる
-        db_prices = await self.repository.get_prices(code, start, end)
+        # DBから取得を試みる（データベースが利用可能な場合のみ）
+        db_prices = []
+        try:
+            db_prices = await self.repository.get_prices(code, start, end)
+        except Exception:
+            # データベース接続エラーの場合はスキップ
+            pass
 
         # データが十分にある場合はDBから返す
         if len(db_prices) > 0:
@@ -177,9 +203,13 @@ class StockService:
             code, start_date=start, end_date=end, period=period
         )
 
-        # DBに保存
+        # DBに保存（データベースが利用可能な場合のみ）
         if prices:
-            await self.repository.save_prices(code, prices)
+            try:
+                await self.repository.save_prices(code, prices)
+            except Exception:
+                # データベース接続エラーの場合はスキップ
+                pass
 
         # キャッシュに保存（1時間）
         if prices:

@@ -26,8 +26,13 @@ Base = declarative_base()
 
 async def get_db() -> AsyncSession:
     """Dependency for getting database session"""
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+    try:
+        async with AsyncSessionLocal() as session:
+            try:
+                yield session
+            finally:
+                await session.close()
+    except Exception as e:
+        # データベース接続エラーの場合、Noneを返す（データベースなしモード）
+        # 実際のセッションが必要な場合はエラーを再発生させる
+        raise e
