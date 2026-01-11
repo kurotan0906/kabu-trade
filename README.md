@@ -171,7 +171,37 @@ graph TB
 
 ## セットアップ
 
-詳細は要件定義書（`requirements.md`）を参照してください。
+詳細なセットアップ手順は [SETUP.md](./SETUP.md) を参照してください。
+
+### クイックスタート
+
+1. **データベースの起動**
+   ```bash
+   docker-compose up -d postgres redis
+   ```
+
+2. **バックエンドのセットアップ**
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env  # .envファイルを編集
+   alembic upgrade head
+   uvicorn app.main:app --reload
+   ```
+
+3. **フロントエンドのセットアップ**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+4. **アクセス**
+   - フロントエンド: http://localhost:5173
+   - バックエンドAPI: http://localhost:8000
+   - APIドキュメント: http://localhost:8000/docs
 
 ## ライセンス
 
