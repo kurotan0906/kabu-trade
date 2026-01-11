@@ -26,7 +26,12 @@ class Settings(BaseSettings):
     USE_MOCK_PROVIDER: bool = False  # モックプロバイダーを使用するか
 
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """CORS originsをリスト形式で取得"""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     class Config:
         env_file = ".env"
