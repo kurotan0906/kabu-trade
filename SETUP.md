@@ -35,13 +35,8 @@ pip install -r requirements.txt
 `.env`ファイルを作成：
 
 ```bash
-cp .env.example .env
-# .envファイルを編集
-```
-
-`.env`ファイルの内容：
-
-```env
+# .envファイルを手動で作成
+cat > .env << 'EOF'
 # Database
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/kabu_trade
 REDIS_URL=redis://localhost:6379/0
@@ -51,6 +46,9 @@ KABU_STATION_API_TOKEN=  # 空欄でOK（自動取得）
 KABU_STATION_PASSWORD=your_api_password_here
 KABU_STATION_API_URL=https://localhost:18080/kabusapi
 
+# Provider settings
+USE_MOCK_PROVIDER=true  # モックプロバイダーを使用する場合はtrue（開発・テスト用）
+
 # Application
 APP_NAME=kabu-trade
 APP_VERSION=1.0.0
@@ -59,7 +57,12 @@ LOG_LEVEL=INFO
 
 # CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+EOF
 ```
+
+または、エディタで`.env`ファイルを作成して上記の内容をコピーしてください。
+
+**重要**: kabuステーションAPIが準備できていない場合は、`USE_MOCK_PROVIDER=true`に設定してください。
 
 ### 2.4 データベースの起動
 
