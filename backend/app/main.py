@@ -75,11 +75,11 @@ async def health_check():
 
 
 # APIルーターのインポート
-from app.api.v1 import stocks
+from app.api.v1 import stocks, evaluations
 
 app.include_router(stocks.router, prefix="/api/v1/stocks", tags=["stocks"])
+app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"])
 
 # 将来の拡張用
-# from app.api.v1 import evaluations, strategies
-# app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"])
+# from app.api.v1 import strategies
 # app.include_router(strategies.router, prefix="/api/v1/strategies", tags=["strategies"])
