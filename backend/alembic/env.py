@@ -15,7 +15,8 @@ if config.config_file_name is not None:
 
 # Import Base and models
 from app.core.database import Base
-from app.models import stock, stock_price  # noqa: F401
+from app.models.stock import Stock  # noqa: F401
+from app.models.stock_price import StockPrice  # noqa: F401
 
 # Set target metadata
 target_metadata = Base.metadata

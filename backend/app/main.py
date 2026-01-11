@@ -1,14 +1,26 @@
 """FastAPI application entry point"""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.exceptions import KabuTradeException
+from app.core.redis_client import get_redis, close_redis
 
 # ロギング設定
 setup_logging()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """アプリケーションのライフサイクル管理"""
+    # 起動時
+    await get_redis()  # Redis接続を初期化
+    yield
+    # 終了時
+    await close_redis()  # Redis接続を閉じる
 
 # FastAPIアプリケーションの作成
 app = FastAPI(
@@ -17,6 +29,7 @@ app = FastAPI(
     description="株取引支援システム - 個人の投資効率化のためのAPI",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS設定
