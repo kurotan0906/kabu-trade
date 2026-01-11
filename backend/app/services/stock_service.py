@@ -6,7 +6,9 @@ from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.stock_repository import StockRepository
 from app.external.providers.kabu_station import KabuStationProvider
+from app.external.providers.mock_provider import MockProvider
 from app.core.redis_client import get_redis
+from app.core.config import settings
 from app.schemas.stock import StockInfo, StockPriceData
 from app.core.exceptions import StockNotFoundError
 import json
@@ -18,7 +20,15 @@ class StockService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repository = StockRepository(db)
-        self.provider = KabuStationProvider()
+        # プロバイダーを選択（モックモードまたはkabuステーション）
+        if settings.USE_MOCK_PROVIDER:
+            self.provider = MockProvider()
+        else:
+            try:
+                self.provider = KabuStationProvider()
+            except Exception:
+                # kabuステーションAPIが利用できない場合はモックにフォールバック
+                self.provider = MockProvider()
 
     async def _get_cache(self, key: str) -> Optional[dict]:
         """キャッシュからデータを取得"""

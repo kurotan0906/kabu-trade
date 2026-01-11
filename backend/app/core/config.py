@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     KABU_STATION_PASSWORD: str = ""
     KABU_STATION_API_URL: str = "https://localhost:18080/kabusapi"
 
+    # Provider settings
+    USE_MOCK_PROVIDER: bool = False  # モックプロバイダーを使用するか
+
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
 
