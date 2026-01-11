@@ -1,6 +1,6 @@
 """Stock schemas"""
 
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -24,7 +24,7 @@ class StockInfo(BaseModel):
 class StockPriceData(BaseModel):
     """株価データスキーマ"""
 
-    date: date = Field(..., description="日付")
+    date: date_type = Field(..., description="日付")
     open: Decimal = Field(..., description="始値")
     high: Decimal = Field(..., description="高値")
     low: Decimal = Field(..., description="安値")

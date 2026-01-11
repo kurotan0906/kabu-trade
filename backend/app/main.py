@@ -17,10 +17,17 @@ setup_logging()
 async def lifespan(app: FastAPI):
     """アプリケーションのライフサイクル管理"""
     # 起動時
-    await get_redis()  # Redis接続を初期化
+    try:
+        await get_redis()  # Redis接続を初期化
+    except Exception as e:
+        # Redis接続エラーを無視（データベースなしモード）
+        print(f"⚠ Redis接続エラー（無視）: {e}")
     yield
     # 終了時
-    await close_redis()  # Redis接続を閉じる
+    try:
+        await close_redis()  # Redis接続を閉じる
+    except Exception:
+        pass
 
 # FastAPIアプリケーションの作成
 app = FastAPI(
@@ -75,10 +82,17 @@ async def health_check():
 
 
 # APIルーターのインポート
-from app.api.v1 import stocks, evaluations
+from app.api.v1 import stocks
 
 app.include_router(stocks.router, prefix="/api/v1/stocks", tags=["stocks"])
-app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"])
+
+# 評価機能（Phase 2）- pandas_taがインストールされている場合のみ
+try:
+    from app.api.v1 import evaluations
+    app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"])
+except ImportError:
+    # pandas_taがインストールされていない場合は評価機能をスキップ
+    pass
 
 # 将来の拡張用
 # from app.api.v1 import strategies

@@ -1,6 +1,6 @@
 """StockPrice model"""
 
-from sqlalchemy import Column, Integer, String, Numeric, BigInteger, Date, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Numeric, BigInteger, Date, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from app.core.database import Base
 
