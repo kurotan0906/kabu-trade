@@ -18,7 +18,7 @@ pandas==2.1.3
 numpy==1.26.2
 
 # Technical analysis
-pandas-ta==0.3.14b0
+pandas-ta @ https://downloads.sourceforge.net/project/pandas-ta.mirror/0.3.14/PandasTA-v0.3.14b%20source%20code.tar.gz
 
 # HTTP client
 httpx==0.25.2

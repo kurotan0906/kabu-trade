@@ -120,6 +120,70 @@ npm run dev
 
 ## トラブルシューティング
 
+### macOS (Apple Silicon) での仮想環境作成エラー
+
+**問題**: `python -m venv venv` や `ensurepip` が `Operation not permitted` エラーで失敗する
+
+**原因**: macOS の保護機能により、ホームディレクトリ配下（`~/src` など）で `ensurepip` が実行できない場合がある
+
+**解決方法**: 仮想環境を `/opt/venvs/` 配下に作成し、プロジェクトからシンボリックリンクを張る
+
+```bash
+# 1. /opt/venvs ディレクトリを作成（初回のみ、sudo が必要な場合あり）
+sudo mkdir -p /opt/venvs
+
+# 2. 仮想環境を /opt/venvs 配下に作成
+python3.11 -m venv /opt/venvs/kabu-trade
+
+# 3. プロジェクトの backend/venv をシンボリックリンクに置き換え
+cd backend
+rm -rf venv  # 既存の venv がある場合
+ln -s /opt/venvs/kabu-trade venv
+
+# 4. 仮想環境を有効化
+source venv/bin/activate
+# または
+source ~/src/kabu-trade/backend/venv/bin/activate
+```
+
+**確認方法**:
+```bash
+# 仮想環境が正しく有効化されているか確認
+which python
+# 出力例: /opt/venvs/kabu-trade/bin/python
+
+which pip
+# 出力例: /opt/venvs/kabu-trade/bin/pip
+```
+
+### pandas-ta のインストールエラー
+
+**問題**: `pip install -r requirements.txt` で `pandas-ta==0.3.14b0` が PyPI から取得できず失敗する
+
+**原因**: Python 3.11 環境では pandas-ta の該当バージョンが PyPI に存在しない、または不安定
+
+**解決方法**: `requirements.txt` で SourceForge ミラーから直接インストールする形式に変更
+
+`backend/requirements.txt` に以下の行を記載:
+```
+pandas-ta @ https://downloads.sourceforge.net/project/pandas-ta.mirror/0.3.14/PandasTA-v0.3.14b%20source%20code.tar.gz
+```
+
+**注意**: pandas-ta 0.3.14b0 をインポート時に以下の警告が表示される場合があります（エラーではない）:
+```
+UserWarning: pkg_resources is deprecated ... slated for removal as early as 2025-11-30
+```
+これは pandas-ta が内部で `pkg_resources` を使用しているためです。現時点では動作に影響はありません。
+
+**確認方法**:
+```bash
+python - << 'EOF'
+import pandas_ta as ta
+print("pandas-ta OK:", ta.__version__)
+EOF
+# 出力例: pandas-ta OK: 0.3.14b0
+```
+
 ### データベース接続エラー
 
 - PostgreSQLが起動しているか確認: `docker-compose ps`
@@ -136,3 +200,27 @@ npm run dev
 - APIが有効になっているか確認
 - パスワードが正しいか確認
 - ファイアウォールでポート18080がブロックされていないか確認
+
+## 環境情報（2026-01-12時点）
+
+### 動作確認済み環境
+
+- **OS**: macOS (Apple Silicon)
+- **Python**: 3.11.14
+- **pip**: 25.3
+- **仮想環境**: `/opt/venvs/kabu-trade`（macOS の保護制限回避のため）
+- **シンボリックリンク**: `backend/venv` → `/opt/venvs/kabu-trade`
+
+### 依存関係のインストール状況
+
+- ✅ すべての依存関係が正常にインストール済み
+- ✅ pandas-ta 0.3.14b0 が SourceForge ミラーから正常にインストール済み
+- ✅ 動作確認済み（`import pandas_ta as ta` が成功）
+
+### 次のステップ
+
+依存関係のインストールが完了したため、以降は以下に進むことができます：
+
+1. アプリ起動（uvicorn/FastAPI）
+2. データベース接続設定
+3. 指標計算の実装
