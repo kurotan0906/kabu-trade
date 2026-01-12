@@ -24,8 +24,21 @@ from app.models.key_point import KeyPoint  # noqa: F401
 # Set target metadata
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py
-config.set_main_option("sqlalchemy.url", config.get_main_option("sqlalchemy.url"))
+# Get database URL from environment variable or use config file
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Get DATABASE_URL from environment, fallback to config file
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    # Keep +asyncpg for async engine
+    config.set_main_option("sqlalchemy.url", database_url)
+else:
+    # Fallback to config file value
+    config.set_main_option("sqlalchemy.url", config.get_main_option("sqlalchemy.url"))
 
 
 def run_migrations_offline() -> None:
