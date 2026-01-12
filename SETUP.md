@@ -156,6 +156,41 @@ which pip
 # 出力例: /opt/venvs/kabu-trade/bin/pip
 ```
 
+### npm キャッシュの権限エラー
+
+**問題**: `npm install` で `EPERM` エラーが発生し、キャッシュフォルダにアクセスできない
+
+**原因**: macOS の保護機能により、ホームディレクトリ配下（`~/.npm`）で権限問題が発生する場合がある。過去のnpmバージョンの不具合でroot所有のファイルが残っている可能性がある。
+
+**解決方法**: npmキャッシュを `/opt/npm-cache` 配下に配置する
+
+```bash
+# 1. /opt/npm-cache ディレクトリを作成（初回のみ、sudo が必要）
+sudo mkdir -p /opt/npm-cache
+sudo chown -R $(whoami):$(id -gn) /opt/npm-cache
+
+# 2. 既存の.npmフォルダを削除（問題のあるキャッシュをクリア）
+sudo rm -rf ~/.npm
+
+# 3. frontend/.npmrc ファイルを作成（既に作成済みの場合はスキップ）
+cd frontend
+echo "cache=/opt/npm-cache" > .npmrc
+
+# 4. 依存関係をインストール
+npm install
+```
+
+**確認方法**:
+```bash
+# npmキャッシュの場所を確認
+npm config get cache
+# 出力例: /opt/npm-cache
+
+# .npmrcファイルの内容を確認
+cat frontend/.npmrc
+# 出力例: cache=/opt/npm-cache
+```
+
 ### pandas-ta のインストールエラー
 
 **問題**: `pip install -r requirements.txt` で `pandas-ta==0.3.14b0` が PyPI から取得できず失敗する

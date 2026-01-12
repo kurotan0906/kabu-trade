@@ -24,7 +24,8 @@ const StockDetailPage = () => {
       fetchStock(code);
       fetchPrices(code, period);
     }
-  }, [code, fetchStock, fetchPrices, period]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, period]);
 
   const handleEvaluate = async () => {
     if (!code) return;

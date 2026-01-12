@@ -22,7 +22,9 @@ const StockInfo = ({ stock }: StockInfoProps) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
         {stock.current_price && (
           <div>
-            <strong>現在の株価:</strong> {stock.current_price.toLocaleString()}円
+            <strong>現在の株価:</strong> {typeof stock.current_price === 'string' 
+              ? parseFloat(stock.current_price).toLocaleString() 
+              : stock.current_price.toLocaleString()}円
           </div>
         )}
         {stock.sector && (
@@ -32,17 +34,23 @@ const StockInfo = ({ stock }: StockInfoProps) => {
         )}
         {stock.market_cap && (
           <div>
-            <strong>時価総額:</strong> {(stock.market_cap / 1000000000).toFixed(2)}億円
+            <strong>時価総額:</strong> {((typeof stock.market_cap === 'string' 
+              ? parseFloat(stock.market_cap) 
+              : stock.market_cap) / 1000000000).toFixed(2)}億円
           </div>
         )}
         {stock.per && (
           <div>
-            <strong>PER:</strong> {stock.per.toFixed(2)}
+            <strong>PER:</strong> {typeof stock.per === 'string' 
+              ? parseFloat(stock.per).toFixed(2) 
+              : stock.per.toFixed(2)}
           </div>
         )}
         {stock.pbr && (
           <div>
-            <strong>PBR:</strong> {stock.pbr.toFixed(2)}
+            <strong>PBR:</strong> {typeof stock.pbr === 'string' 
+              ? parseFloat(stock.pbr).toFixed(2) 
+              : stock.pbr.toFixed(2)}
           </div>
         )}
       </div>
