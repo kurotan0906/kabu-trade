@@ -680,32 +680,62 @@ graph LR
 
 ### 8.1 開発環境構成
 
+**構成の特徴:**
+- すべてのサービスをDocker Composeで統一管理
+- フロントエンドとバックエンドもDockerコンテナで実行
+- ボリュームマウントにより、コード変更が即座に反映（ホットリロード）
+- 開発環境と本番環境で同じ構成を維持可能
+
 ```mermaid
 graph TB
     subgraph Dev["開発環境 (Docker Compose)"]
-        subgraph Frontend_Dev["フロントエンド"]
-            React_Dev[React Dev Server<br/>:3000]
+        subgraph Frontend_Dev["フロントエンドコンテナ"]
+            Vite_Dev[Vite Dev Server<br/>:5173<br/>ホットリロード]
+            Volume_FE[ボリュームマウント<br/>./frontend:/app]
         end
         
-        subgraph Backend_Dev["バックエンド"]
-            FastAPI_Dev[FastAPI Server<br/>:8000]
+        subgraph Backend_Dev["バックエンドコンテナ"]
+            FastAPI_Dev[FastAPI + uvicorn<br/>:8000<br/>--reload モード]
+            Volume_BE[ボリュームマウント<br/>./backend:/app]
         end
         
-        subgraph DB_Dev["データベース"]
-            PG_Dev[(PostgreSQL<br/>:5432)]
-            Redis_Dev[(Redis<br/>:6379)]
+        subgraph DB_Dev["データベースコンテナ"]
+            PG_Dev[(PostgreSQL<br/>:5432<br/>永続化ボリューム)]
+            Redis_Dev[(Redis<br/>:6379<br/>永続化ボリューム)]
         end
     end
     
-    React_Dev -->|HTTP| FastAPI_Dev
-    FastAPI_Dev --> PG_Dev
-    FastAPI_Dev --> Redis_Dev
+    Vite_Dev -->|/api/* プロキシ<br/>http://backend:8000| FastAPI_Dev
+    FastAPI_Dev -->|接続| PG_Dev
+    FastAPI_Dev -->|接続| Redis_Dev
+    Volume_FE -.->|コード変更反映| Vite_Dev
+    Volume_BE -.->|コード変更反映| FastAPI_Dev
     
     style Dev fill:#e8f5e9
-    style Frontend_Dev fill:#e1f5ff
+    style Frontend_Dev fill:#c8e6c9
     style Backend_Dev fill:#fff4e1
     style DB_Dev fill:#f3e5f5
 ```
+
+**起動方法:**
+```bash
+# すべてのサービスを起動
+docker compose up --build
+
+# バックグラウンドで起動
+docker compose up -d --build
+
+# ログ確認
+docker compose logs -f
+
+# 停止
+docker compose down
+```
+
+**アクセス:**
+- フロントエンド: http://localhost:5173
+- バックエンドAPI: http://localhost:8000
+- APIドキュメント: http://localhost:8000/docs
 
 ### 8.2 本番環境構成（将来的）
 

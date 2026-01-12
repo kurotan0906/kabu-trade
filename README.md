@@ -5,44 +5,45 @@
 ## システム概要
 
 ```mermaid
-graph LR
+graph TB
     subgraph User["ユーザー"]
-        U[投資家]
+        U[投資家<br/>ブラウザ]
     end
     
-    subgraph System["Kabu Trade システム"]
-        subgraph Frontend["フロントエンド"]
-            UI[UI画面]
-            Chart[チャート表示]
+    subgraph Docker["Docker Compose環境"]
+        subgraph Frontend["フロントエンドコンテナ"]
+            UI[React + Vite<br/>:5173<br/>ホットリロード対応]
         end
         
-        subgraph Backend["バックエンド"]
-            API[API]
+        subgraph Backend["バックエンドコンテナ"]
+            API[FastAPI + uvicorn<br/>:8000<br/>ホットリロード対応]
             Analysis[分析エンジン]
         end
         
-        subgraph Data["データ"]
-            DB[(PostgreSQL)]
-            Cache[(Redis)]
+        subgraph DB["データベースコンテナ"]
+            PG[(PostgreSQL<br/>:5432)]
+            Redis[(Redis<br/>:6379)]
         end
     end
     
     subgraph External["外部サービス"]
-        StockAPI[株価データAPI]
+        StockAPI[kabuステーションAPI<br/>またはモックプロバイダー]
     end
     
-    U -->|操作| UI
-    UI -->|リクエスト| API
+    U -->|HTTP| UI
+    UI -->|/api/* プロキシ| API
     API -->|分析| Analysis
-    Analysis -->|データ取得| DB
-    Analysis -->|キャッシュ| Cache
+    Analysis -->|データ取得| PG
+    Analysis -->|キャッシュ| Redis
     API -->|株価取得| StockAPI
-    API -->|結果返却| UI
-    UI -->|表示| Chart
-    Chart -->|可視化| U
+    API -->|JSON| UI
+    UI -->|表示| U
     
     style User fill:#e1f5ff
-    style System fill:#fff4e1
+    style Docker fill:#e8f5e9
+    style Frontend fill:#c8e6c9
+    style Backend fill:#fff4e1
+    style DB fill:#f3e5f5
     style External fill:#fce4ec
 ```
 
