@@ -12,9 +12,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: '0.0.0.0',  // Docker環境で外部からアクセス可能にする
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // Docker環境ではサービス名、ローカル環境ではlocalhost
+        target: process.env.VITE_API_BASE_URL || 'http://backend:8000',
         changeOrigin: true,
       },
     },

@@ -14,32 +14,20 @@ git clone https://github.com/kurotan0906/kabu-trade.git
 cd kabu-trade
 ```
 
-## 2. バックエンドのセットアップ
+## 2. Docker Composeで一括起動（推奨）
 
-### 2.1 仮想環境の作成
+すべてのサービスをDockerで統一管理します。環境の一貫性が保たれ、AWSへの移行も容易です。
 
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
+### 2.1 環境変数の設定
 
-### 2.2 依存関係のインストール
+`backend/.env`ファイルを作成：
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 2.3 環境変数の設定
-
-`.env`ファイルを作成：
-
-```bash
-# .envファイルを手動で作成
-cat > .env << 'EOF'
+# backend/.envファイルを手動で作成
+cat > backend/.env << 'EOF'
 # Database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/kabu_trade
-REDIS_URL=redis://localhost:6379/0
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/kabu_trade
+REDIS_URL=redis://redis:6379/0
 
 # kabuステーションAPI
 KABU_STATION_API_TOKEN=  # 空欄でOK（自動取得）
@@ -56,47 +44,113 @@ DEBUG=True
 LOG_LEVEL=INFO
 
 # CORS
-CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+CORS_ORIGINS=http://localhost:5173
 EOF
 ```
 
-または、エディタで`.env`ファイルを作成して上記の内容をコピーしてください。
-
 **重要**: kabuステーションAPIが準備できていない場合は、`USE_MOCK_PROVIDER=true`に設定してください。
 
-### 2.4 データベースの起動
+### 2.2 すべてのサービスを起動
 
 ```bash
-cd ..
-docker-compose up -d postgres redis
+# すべてのサービス（PostgreSQL、Redis、バックエンド、フロントエンド）を起動
+docker compose up --build
+
+# バックグラウンドで起動する場合
+docker compose up -d --build
 ```
 
-### 2.5 データベースマイグレーション
+### 2.3 データベースマイグレーション
+
+```bash
+# バックエンドコンテナでマイグレーションを実行
+docker compose exec backend alembic upgrade head
+```
+
+### 2.4 アクセス
+
+- **フロントエンド**: http://localhost:5173
+- **バックエンドAPI**: http://localhost:8000
+- **APIドキュメント**: http://localhost:8000/docs
+
+### 2.5 ログ確認
+
+```bash
+# すべてのサービスのログを確認
+docker compose logs -f
+
+# 特定のサービスのログを確認
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+### 2.6 停止
+
+```bash
+# すべてのサービスを停止
+docker compose down
+
+# ボリュームも削除する場合（データベースのデータも削除されます）
+docker compose down -v
+```
+
+## 3. ローカル環境で起動（オプション）
+
+Dockerを使わず、ローカル環境で直接起動する場合：
+
+### 3.1 バックエンドのセットアップ
+
+#### 3.1.1 仮想環境の作成
 
 ```bash
 cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+```
+
+#### 3.1.2 依存関係のインストール
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 3.1.3 環境変数の設定
+
+`backend/.env`ファイルを作成（上記2.1を参照）
+
+#### 3.1.4 データベースの起動
+
+```bash
+cd ..
+docker compose up -d postgres redis
+```
+
+#### 3.1.5 データベースマイグレーション
+
+```bash
+cd backend
+source venv/bin/activate
 alembic upgrade head
 ```
 
-### 2.6 バックエンドの起動
+#### 3.1.6 バックエンドの起動
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
 バックエンドAPIは http://localhost:8000 で起動します。
-APIドキュメントは http://localhost:8000/docs で確認できます。
 
-## 3. フロントエンドのセットアップ
+### 3.2 フロントエンドのセットアップ
 
-### 3.1 依存関係のインストール
+#### 3.2.1 依存関係のインストール
 
 ```bash
 cd frontend
 npm install
 ```
 
-### 3.2 フロントエンドの起動
+#### 3.2.2 フロントエンドの起動
 
 ```bash
 npm run dev
@@ -104,7 +158,27 @@ npm run dev
 
 フロントエンドは http://localhost:5173 で起動します。
 
-## 4. kabuステーションAPIの設定
+## 4. Docker Composeの利点
+
+### 4.1 環境の一貫性
+
+- 開発環境と本番環境で同じ構成
+- チームメンバー間で環境差がない
+- システムライブラリも含めて管理
+
+### 4.2 AWSへの移行が容易
+
+- ECS/Fargateへの移行が簡単
+- コンテナイメージをそのまま使用可能
+- 環境変数で設定を切り替え
+
+### 4.3 セットアップの簡素化
+
+- Dockerだけで起動可能
+- Python/Node.jsの環境構築が不要
+- 依存関係の管理が簡単
+
+## 5. kabuステーションAPIの設定
 
 1. SBI証券のメンバーズサイトにログイン
 2. kabuステーションを起動
@@ -112,7 +186,7 @@ npm run dev
 4. APIパスワードを設定
 5. `.env`ファイルの`KABU_STATION_PASSWORD`に設定したパスワードを入力
 
-## 5. 動作確認
+## 6. 動作確認
 
 1. フロントエンド（http://localhost:5173）にアクセス
 2. 銘柄コード（例: 7203）を入力して検索
