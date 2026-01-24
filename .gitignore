@@ -93,3 +93,6 @@ temp/
 .DS_Store
 Thumbs.db
 
+# Local SSH keys (never commit)
+ss500725
+ss500725.pub
