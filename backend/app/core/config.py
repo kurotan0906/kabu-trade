@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Provider settings
     USE_MOCK_PROVIDER: bool = False  # モックプロバイダーを使用するか
 
+    # J-Quants API (PoC)
+    JQUANTS_API_URL: str = "https://api.jpx-jquants.com/v1"
+    JQUANTS_ID_TOKEN: str = ""
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
 
