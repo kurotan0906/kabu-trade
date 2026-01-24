@@ -35,6 +35,11 @@ _updated_at: 2026-01-24_
 **Purpose**: 設定、DB/Redis、例外、ログ、外部APIクライアント、分析ユーティリティ  
 **Example**: `core/config.py`, `core/redis_client.py`, `external/providers/*`
 
+### Backend Tests
+**Location**: `backend/tests/`  
+**Purpose**: ユースケース/ゲート判定などのドメインロジックを中心に、pytest（必要に応じてpytest-asyncio）で検証する  
+**Note**: `backend/pytest.ini` で `.venv` / `venv*` / `site-packages` を除外し、仮想環境内の誤収集を防ぐ
+
 ### Frontend UI
 **Location**: `frontend/src/components/`, `frontend/src/pages/`  
 **Purpose**: UI部品とページ（ルーティング単位）  

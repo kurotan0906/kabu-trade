@@ -42,6 +42,7 @@ _updated_at: 2026-01-24_
 
 - **Backend**: pytest / pytest-asyncio（非同期テスト）を基本とする
 - **Frontend**: 追加予定（現時点は最小構成）
+- **テスト収集の安定化**: `backend/pytest.ini` で `.venv` / `venv*` / `site-packages` を除外し、仮想環境内の不要なテスト収集を防ぐ
 
 ## 開発環境
 
@@ -80,6 +81,7 @@ cd frontend && npm run lint
 - **外部データの切替を前提**: 実サービス（kabuステーション等）とモックの切替ができるように、外部API連携は抽象化（Provider）する
 - **UI→APIは `/api` プロキシで統一**: 開発時はViteのproxyで `/api/*` をバックエンドへ転送し、CORSやベースURLの分岐を最小化する
 - **“落としどころ”を用意する**: 依存サービス（Redis等）が利用できない場合でも、開発/検証を止めない設計を許容する（ただし機能制限は明示）
+- **import-safe を維持する**: `app.services` / `app.repositories` / `app.models` の `__init__.py` は lazy import（`__getattr__`）で、テスト収集やCLI実行時にDB初期化などの重いimportを避ける
 
 ---
 _標準とパターンを記し、依存パッケージの網羅は避ける_
