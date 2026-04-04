@@ -34,12 +34,24 @@ const StockDetailPage = () => {
     try {
       const result = await evaluationApi.evaluateStock(code, period);
       setEvaluation(result);
-    } catch (err: any) {
-      setEvaluationError(
-        err.response?.data?.error?.message ||
-          err.message ||
-          '評価の実行に失敗しました'
-      );
+    } catch (err: unknown) {
+      let errorMessage = '評価の実行に失敗しました';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'response' in err) {
+        const errorObj = err as Record<string, unknown>;
+        const response = errorObj.response as Record<string, unknown>;
+        if (response && typeof response === 'object' && 'data' in response) {
+          const data = response.data as Record<string, unknown>;
+          if ('error' in data && typeof data.error === 'object' && data.error !== null) {
+            const errorDetail = data.error as Record<string, unknown>;
+            if ('message' in errorDetail && typeof errorDetail.message === 'string') {
+              errorMessage = errorDetail.message;
+            }
+          }
+        }
+      }
+      setEvaluationError(errorMessage);
     } finally {
       setEvaluationLoading(false);
     }

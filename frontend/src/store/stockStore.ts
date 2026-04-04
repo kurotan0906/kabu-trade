@@ -33,11 +33,23 @@ export const useStockStore = create<StockState>((set) => ({
     try {
       const stock = await stockApi.getStock(code);
       set({ currentStock: stock, loading: false });
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.message ||
-        '銘柄情報の取得に失敗しました';
+    } catch (error: unknown) {
+      let errorMessage = '銘柄情報の取得に失敗しました';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        const errorObj = error as Record<string, unknown>;
+        const response = errorObj.response as Record<string, unknown>;
+        if (response && typeof response === 'object' && 'data' in response) {
+          const data = response.data as Record<string, unknown>;
+          if ('error' in data && typeof data.error === 'object' && data.error !== null) {
+            const errorDetail = data.error as Record<string, unknown>;
+            if ('message' in errorDetail && typeof errorDetail.message === 'string') {
+              errorMessage = errorDetail.message;
+            }
+          }
+        }
+      }
       set({ error: errorMessage, loading: false, currentStock: null });
     }
   },
@@ -48,11 +60,23 @@ export const useStockStore = create<StockState>((set) => ({
     try {
       const prices = await stockApi.getPrices(code, period);
       set({ stockPrices: prices, loading: false });
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.message ||
-        '株価データの取得に失敗しました';
+    } catch (error: unknown) {
+      let errorMessage = '株価データの取得に失敗しました';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        const errorObj = error as Record<string, unknown>;
+        const response = errorObj.response as Record<string, unknown>;
+        if (response && typeof response === 'object' && 'data' in response) {
+          const data = response.data as Record<string, unknown>;
+          if ('error' in data && typeof data.error === 'object' && data.error !== null) {
+            const errorDetail = data.error as Record<string, unknown>;
+            if ('message' in errorDetail && typeof errorDetail.message === 'string') {
+              errorMessage = errorDetail.message;
+            }
+          }
+        }
+      }
       set({ error: errorMessage, loading: false, stockPrices: null });
     }
   },
