@@ -20,7 +20,7 @@ class TradingViewSignal(Base):
     ma_recommendation = Column(String(20), nullable=True, comment="移動平均サマリー")
     osc_recommendation = Column(String(20), nullable=True, comment="オシレーターサマリー")
     details = Column(JSON, nullable=True, comment="全指標の生データ")
-    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):
         return f"<TradingViewSignal(symbol={self.symbol}, recommendation={self.recommendation})>"
