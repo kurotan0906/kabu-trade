@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scoresApi } from '@/services/api/scoresApi';
 import type { StockScore, BatchStatus } from '@/types/stockScore';
+import { tradingviewApi } from '@/services/api/tradingviewApi';
+import type { TradingViewSignal } from '@/types/tradingviewSignal';
 
 const RATING_COLORS: Record<string, string> = {
   '強い買い': '#3b82f6',
@@ -9,6 +11,14 @@ const RATING_COLORS: Record<string, string> = {
   '中立': '#9ca3af',
   '売り': '#f59e0b',
   '強い売り': '#ef4444',
+};
+
+const TV_COLORS: Record<string, string> = {
+  'STRONG_BUY': '#10b981',
+  'BUY': '#3b82f6',
+  'NEUTRAL': '#9ca3af',
+  'SELL': '#f59e0b',
+  'STRONG_SELL': '#ef4444',
 };
 
 const ScoreBar = ({ score }: { score: number | null }) => {
@@ -29,15 +39,20 @@ const StockRankingPage = () => {
   const [batchStatus, setBatchStatus] = useState<BatchStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
+  const [tvSignals, setTvSignals] = useState<Record<string, TradingViewSignal>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
     Promise.all([
       scoresApi.listScores('total_score', 100),
       scoresApi.getBatchStatus(),
-    ]).then(([s, b]) => {
+      tradingviewApi.listSignals(),
+    ]).then(([s, b, tv]) => {
       setScores(s);
       setBatchStatus(b);
+      const map: Record<string, TradingViewSignal> = {};
+      tv.forEach((sig) => { map[sig.symbol] = sig; });
+      setTvSignals(map);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -77,6 +92,26 @@ const StockRankingPage = () => {
         >
           {triggering ? '開始中...' : '▶ スコアリング実行'}
         </button>
+        <button
+          onClick={() =>
+            alert(
+              'Claude Code で「スコア上位100銘柄をTradingView一括分析して /api/v1/tradingview-signals に保存して」と依頼してください'
+            )
+          }
+          style={{
+            padding: '8px 16px',
+            background: '#ea580c',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: 13,
+            marginLeft: 8,
+          }}
+        >
+          📡 TVバッチ分析
+        </button>
       </div>
 
       {scores.length === 0 ? (
@@ -94,6 +129,7 @@ const StockRankingPage = () => {
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>ファンダ</th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>テクニカル</th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>黒点子</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#fb923c', fontWeight: 600 }}>TVシグナル</th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}></th>
             </tr>
           </thead>
@@ -128,6 +164,24 @@ const StockRankingPage = () => {
                 </td>
                 <td style={{ padding: '10px 12px', color: '#a78bfa', fontWeight: 600 }}>
                   {s.kurotenko_score !== null ? `${Math.round(s.kurotenko_score)}%` : '—'}
+                </td>
+                <td style={{ padding: '10px 12px' }}>
+                  {tvSignals[s.symbol.replace('.T', '')] ? (
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: `${TV_COLORS[tvSignals[s.symbol.replace('.T', '')].recommendation ?? ''] ?? '#6b7280'}22`,
+                        color: TV_COLORS[tvSignals[s.symbol.replace('.T', '')].recommendation ?? ''] ?? '#6b7280',
+                      }}
+                    >
+                      {(tvSignals[s.symbol.replace('.T', '')].recommendation ?? '—').replace('_', ' ')}
+                    </span>
+                  ) : (
+                    <span style={{ color: '#4b5563', fontSize: 12 }}>—</span>
+                  )}
                 </td>
                 <td style={{ padding: '10px 12px' }}>
                   <button
