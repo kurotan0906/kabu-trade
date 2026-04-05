@@ -120,6 +120,10 @@ app.include_router(chart_analysis.router, prefix="/api/v1/chart-analysis", tags=
 from app.api.v1 import batch
 app.include_router(batch.router, prefix="/api/v1/batch", tags=["batch"])
 
+# スコアAPI
+from app.api.v1 import scores
+app.include_router(scores.router, prefix="/api/v1/scores", tags=["scores"])
+
 # 将来の拡張用
 # from app.api.v1 import strategies
 # app.include_router(strategies.router, prefix="/api/v1/strategies", tags=["strategies"])
