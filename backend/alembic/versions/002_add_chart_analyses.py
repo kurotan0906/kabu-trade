@@ -29,9 +29,9 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False, comment='作成日時'),
         sa.PrimaryKeyConstraint('id'),
     )
-    op.create_index('ix_chart_analyses_symbol', 'chart_analyses', ['symbol'], unique=False)
+    op.create_index(op.f('ix_chart_analyses_symbol'), 'chart_analyses', ['symbol'], unique=False)
 
 
 def downgrade() -> None:
-    op.drop_index('ix_chart_analyses_symbol', table_name='chart_analyses')
+    op.drop_index(op.f('ix_chart_analyses_symbol'), table_name='chart_analyses')
     op.drop_table('chart_analyses')
