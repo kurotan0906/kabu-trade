@@ -5,8 +5,8 @@ from app.main import app
 
 
 @pytest.mark.asyncio
-async def test_list_signals_empty():
-    """シグナルなし時は空リストを返す"""
+async def test_list_signals_returns_list():
+    """シグナル一覧は常にリストを返す"""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/api/v1/tradingview-signals")
     assert response.status_code == 200
