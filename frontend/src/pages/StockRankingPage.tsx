@@ -43,10 +43,11 @@ const StockRankingPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const tvPromise = tradingviewApi.listSignals().catch(() => [] as TradingViewSignal[]);
     Promise.all([
       scoresApi.listScores('total_score', 100),
       scoresApi.getBatchStatus(),
-      tradingviewApi.listSignals(),
+      tvPromise,
     ]).then(([s, b, tv]) => {
       setScores(s);
       setBatchStatus(b);
@@ -82,36 +83,37 @@ const StockRankingPage = () => {
             </div>
           )}
         </div>
-        <button
-          onClick={handleTriggerBatch}
-          disabled={triggering || batchStatus?.status === 'running'}
-          style={{
-            padding: '8px 16px', background: '#7c3aed', color: 'white',
-            border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 13,
-          }}
-        >
-          {triggering ? '開始中...' : '▶ スコアリング実行'}
-        </button>
-        <button
-          onClick={() =>
-            alert(
-              'Claude Code で「スコア上位100銘柄をTradingView一括分析して /api/v1/tradingview-signals に保存して」と依頼してください'
-            )
-          }
-          style={{
-            padding: '8px 16px',
-            background: '#ea580c',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: 13,
-            marginLeft: 8,
-          }}
-        >
-          📡 TVバッチ分析
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleTriggerBatch}
+            disabled={triggering || batchStatus?.status === 'running'}
+            style={{
+              padding: '8px 16px', background: '#7c3aed', color: 'white',
+              border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 13,
+            }}
+          >
+            {triggering ? '開始中...' : '▶ スコアリング実行'}
+          </button>
+          <button
+            onClick={() =>
+              alert(
+                'Claude Code で「スコア上位100銘柄をTradingView一括分析して /api/v1/tradingview-signals に保存して」と依頼してください'
+              )
+            }
+            style={{
+              padding: '8px 16px',
+              background: '#ea580c',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: 13,
+            }}
+          >
+            📡 TVバッチ分析
+          </button>
+        </div>
       </div>
 
       {scores.length === 0 ? (
@@ -134,65 +136,68 @@ const StockRankingPage = () => {
             </tr>
           </thead>
           <tbody>
-            {scores.map((s, i) => (
-              <tr
-                key={s.id}
-                style={{ borderBottom: '1px solid #1f2937', cursor: 'pointer' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#1f2937')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '')}
-              >
-                <td style={{ padding: '10px 12px', color: '#6b7280' }}>{i + 1}</td>
-                <td style={{ padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 600, color: '#a78bfa' }}>{s.symbol}</div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>{s.name}</div>
-                </td>
-                <td style={{ padding: '10px 12px' }}><ScoreBar score={s.total_score} /></td>
-                <td style={{ padding: '10px 12px' }}>
-                  {s.rating ? (
-                    <span style={{
-                      padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600,
-                      background: `${RATING_COLORS[s.rating] ?? '#6b7280'}22`,
-                      color: RATING_COLORS[s.rating] ?? '#6b7280',
-                    }}>{s.rating}</span>
-                  ) : '—'}
-                </td>
-                <td style={{ padding: '10px 12px', color: '#60a5fa', fontWeight: 600 }}>
-                  {s.fundamental_score !== null ? Math.round(s.fundamental_score) : '—'}
-                </td>
-                <td style={{ padding: '10px 12px', color: '#34d399', fontWeight: 600 }}>
-                  {s.technical_score !== null ? Math.round(s.technical_score) : '—'}
-                </td>
-                <td style={{ padding: '10px 12px', color: '#a78bfa', fontWeight: 600 }}>
-                  {s.kurotenko_score !== null ? `${Math.round(s.kurotenko_score)}%` : '—'}
-                </td>
-                <td style={{ padding: '10px 12px' }}>
-                  {tvSignals[s.symbol.replace('.T', '')] ? (
-                    <span
-                      style={{
-                        padding: '2px 8px',
-                        borderRadius: 12,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        background: `${TV_COLORS[tvSignals[s.symbol.replace('.T', '')].recommendation ?? ''] ?? '#6b7280'}22`,
-                        color: TV_COLORS[tvSignals[s.symbol.replace('.T', '')].recommendation ?? ''] ?? '#6b7280',
-                      }}
+            {scores.map((s, i) => {
+              const tvSig = tvSignals[s.symbol.replace('.T', '')];
+              return (
+                <tr
+                  key={s.id}
+                  style={{ borderBottom: '1px solid #1f2937', cursor: 'pointer' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#1f2937')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '')}
+                >
+                  <td style={{ padding: '10px 12px', color: '#6b7280' }}>{i + 1}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <div style={{ fontWeight: 600, color: '#a78bfa' }}>{s.symbol}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>{s.name}</div>
+                  </td>
+                  <td style={{ padding: '10px 12px' }}><ScoreBar score={s.total_score} /></td>
+                  <td style={{ padding: '10px 12px' }}>
+                    {s.rating ? (
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600,
+                        background: `${RATING_COLORS[s.rating] ?? '#6b7280'}22`,
+                        color: RATING_COLORS[s.rating] ?? '#6b7280',
+                      }}>{s.rating}</span>
+                    ) : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', color: '#60a5fa', fontWeight: 600 }}>
+                    {s.fundamental_score !== null ? Math.round(s.fundamental_score) : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', color: '#34d399', fontWeight: 600 }}>
+                    {s.technical_score !== null ? Math.round(s.technical_score) : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', color: '#a78bfa', fontWeight: 600 }}>
+                    {s.kurotenko_score !== null ? `${Math.round(s.kurotenko_score)}%` : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    {tvSig ? (
+                      <span
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          background: `${TV_COLORS[tvSig.recommendation ?? ''] ?? '#6b7280'}22`,
+                          color: TV_COLORS[tvSig.recommendation ?? ''] ?? '#6b7280',
+                        }}
+                      >
+                        {(tvSig.recommendation ?? '—').replaceAll('_', ' ')}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#4b5563', fontSize: 12 }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <button
+                      onClick={() => navigate(`/stocks/${s.symbol.replace('.T', '')}`)}
+                      style={{ fontSize: 12, color: '#9ca3af', background: '#374151', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
                     >
-                      {(tvSignals[s.symbol.replace('.T', '')].recommendation ?? '—').replace('_', ' ')}
-                    </span>
-                  ) : (
-                    <span style={{ color: '#4b5563', fontSize: 12 }}>—</span>
-                  )}
-                </td>
-                <td style={{ padding: '10px 12px' }}>
-                  <button
-                    onClick={() => navigate(`/stocks/${s.symbol.replace('.T', '')}`)}
-                    style={{ fontSize: 12, color: '#9ca3af', background: '#374151', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
-                  >
-                    詳細 →
-                  </button>
-                </td>
-              </tr>
-            ))}
+                      詳細 →
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
