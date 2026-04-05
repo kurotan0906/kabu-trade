@@ -23,6 +23,7 @@ const StockDetailPage = () => {
   const [chartAnalysis, setChartAnalysis] = useState<ChartAnalysis | null>(null);
   const [chartAnalysisLoading, setChartAnalysisLoading] = useState(false);
   const [chartAnalysisError, setChartAnalysisError] = useState<string | null>(null);
+  const [axesRefreshKey, setAxesRefreshKey] = useState(0);
   const { currentStock, stockPrices, loading, error, fetchStock, fetchPrices, clearError } =
     useStockStore();
 
@@ -160,6 +161,22 @@ const StockDetailPage = () => {
           {chartAnalysisLoading ? '取得中...' : 'チャート分析を更新'}
         </button>
 
+        <button
+          onClick={() => setAxesRefreshKey((k) => k + 1)}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '1rem',
+            backgroundColor: '#ea580c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginLeft: '1rem',
+          }}
+        >
+          TradingView 更新
+        </button>
+
         {evaluationError && (
           <ErrorMessage message={evaluationError} onClose={() => setEvaluationError(null)} />
         )}
@@ -175,7 +192,7 @@ const StockDetailPage = () => {
         {chartAnalysis && <ChartAnalysisPanel analysis={chartAnalysis} />}
 
         {/* 多軸分析パネル */}
-        {code && <AnalysisAxesPanel symbol={code} />}
+        {code && <AnalysisAxesPanel key={axesRefreshKey} symbol={code} />}
       </div>
     </div>
   );

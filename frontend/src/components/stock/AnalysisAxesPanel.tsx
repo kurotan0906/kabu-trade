@@ -11,6 +11,7 @@ const AXIS_COLORS: Record<string, string> = {
   'テクニカル': '#10b981',
   '黒点子': '#8b5cf6',
   'チャート分析': '#f59e0b',
+  'TradingView': '#f97316',
 };
 
 const ScoreBar = ({ score, color }: { score: number; color: string }) => (
