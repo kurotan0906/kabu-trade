@@ -124,6 +124,10 @@ app.include_router(batch.router, prefix="/api/v1/batch", tags=["batch"])
 from app.api.v1 import scores
 app.include_router(scores.router, prefix="/api/v1/scores", tags=["scores"])
 
+# TradingView シグナル API
+from app.api.v1 import tradingview_signals
+app.include_router(tradingview_signals.router, prefix="/api/v1/tradingview-signals", tags=["tradingview-signals"])
+
 # 将来の拡張用
 # from app.api.v1 import strategies
 # app.include_router(strategies.router, prefix="/api/v1/strategies", tags=["strategies"])
