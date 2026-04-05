@@ -66,7 +66,8 @@ def run_batch_scoring_sync(redis_client) -> dict:
     processed = 0
     failed = 0
 
-    _set_status(redis_client, "running", total=total, processed=0, failed=0)
+    started_at = datetime.now(timezone.utc).isoformat()
+    _set_status(redis_client, "running", total=total, processed=0, failed=0, started_at=started_at)
     logger.info("バッチスコアリング開始: %d 銘柄", total)
 
     symbol_map = {row["symbol"]: row for row in symbols_data}
@@ -98,24 +99,24 @@ def run_batch_scoring_sync(redis_client) -> dict:
 
                 if (processed + failed) % 100 == 0:
                     session.commit()
-                    _set_status(redis_client, "running", total=total, processed=processed, failed=failed)
+                    _set_status(redis_client, "running", total=total, processed=processed, failed=failed, started_at=started_at)
                     logger.info("進捗: %d/%d (失敗: %d)", processed + failed, total, failed)
 
             session.commit()
 
-    _set_status(redis_client, "done", total=total, processed=processed, failed=failed, finished=True)
+    _set_status(redis_client, "done", total=total, processed=processed, failed=failed, started_at=started_at, finished=True)
     logger.info("バッチスコアリング完了: 成功 %d / 失敗 %d", processed, failed)
     return {"processed": processed, "failed": failed, "total": total}
 
 
-def _set_status(redis_client, status: str, total: int = 0, processed: int = 0, failed: int = 0, finished: bool = False):
+def _set_status(redis_client, status: str, total: int = 0, processed: int = 0, failed: int = 0, started_at: Optional[str] = None, finished: bool = False):
     """Redis に進捗を書き込む（同期版）"""
     data = {
         "status": status,
         "total": total,
         "processed": processed,
         "failed": failed,
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": started_at,
         "finished_at": datetime.now(timezone.utc).isoformat() if finished else None,
     }
     try:
