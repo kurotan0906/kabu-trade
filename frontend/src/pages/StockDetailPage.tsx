@@ -9,6 +9,9 @@ import Loading from '@/components/common/Loading';
 import ErrorMessage from '@/components/common/ErrorMessage';
 import { evaluationApi } from '@/services/api/evaluationApi';
 import type { EvaluationResult as EvaluationResultType } from '@/types/evaluation';
+import ChartAnalysisPanel from '@/components/stock/ChartAnalysisPanel';
+import { chartAnalysisApi } from '@/services/api/chartAnalysisApi';
+import type { ChartAnalysis } from '@/types/chartAnalysis';
 
 const StockDetailPage = () => {
   const { code } = useParams<{ code: string }>();
@@ -16,6 +19,9 @@ const StockDetailPage = () => {
   const [evaluation, setEvaluation] = useState<EvaluationResultType | null>(null);
   const [evaluationLoading, setEvaluationLoading] = useState(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [chartAnalysis, setChartAnalysis] = useState<ChartAnalysis | null>(null);
+  const [chartAnalysisLoading, setChartAnalysisLoading] = useState(false);
+  const [chartAnalysisError, setChartAnalysisError] = useState<string | null>(null);
   const { currentStock, stockPrices, loading, error, fetchStock, fetchPrices, clearError } =
     useStockStore();
 
@@ -23,6 +29,10 @@ const StockDetailPage = () => {
     if (code) {
       fetchStock(code);
       fetchPrices(code, period);
+      // 最新のチャート分析があれば取得
+      chartAnalysisApi.getLatest(code).then(setChartAnalysis).catch(() => {
+        // 未分析の場合はエラーを無視
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, period]);
@@ -54,6 +64,22 @@ const StockDetailPage = () => {
       setEvaluationError(errorMessage);
     } finally {
       setEvaluationLoading(false);
+    }
+  };
+
+  const handleChartAnalysis = async () => {
+    if (!code) return;
+    setChartAnalysisLoading(true);
+    setChartAnalysisError(null);
+    try {
+      const result = await chartAnalysisApi.getLatest(code);
+      setChartAnalysis(result);
+    } catch {
+      setChartAnalysisError(
+        '分析結果が見つかりません。Claude Code でチャート分析を実行してください。'
+      );
+    } finally {
+      setChartAnalysisLoading(false);
     }
   };
 
@@ -115,11 +141,37 @@ const StockDetailPage = () => {
           {evaluationLoading ? '評価中...' : '評価を実行'}
         </button>
 
+        <button
+          onClick={handleChartAnalysis}
+          disabled={chartAnalysisLoading}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '1rem',
+            backgroundColor: '#6200ea',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: chartAnalysisLoading ? 'not-allowed' : 'pointer',
+            opacity: chartAnalysisLoading ? 0.6 : 1,
+            marginLeft: '1rem',
+          }}
+        >
+          {chartAnalysisLoading ? '取得中...' : 'チャート分析を更新'}
+        </button>
+
         {evaluationError && (
           <ErrorMessage message={evaluationError} onClose={() => setEvaluationError(null)} />
         )}
 
         {evaluation && <EvaluationResult evaluation={evaluation} />}
+
+        {chartAnalysisError && (
+          <ErrorMessage
+            message={chartAnalysisError}
+            onClose={() => setChartAnalysisError(null)}
+          />
+        )}
+        {chartAnalysis && <ChartAnalysisPanel analysis={chartAnalysis} />}
       </div>
     </div>
   );
