@@ -94,6 +94,10 @@ except ImportError:
     # pandas_taがインストールされていない場合は評価機能をスキップ
     pass
 
+# チャート分析機能
+from app.api.v1 import chart_analysis
+app.include_router(chart_analysis.router, prefix="/api/v1/chart-analysis", tags=["chart-analysis"])
+
 # 将来の拡張用
 # from app.api.v1 import strategies
 # app.include_router(strategies.router, prefix="/api/v1/strategies", tags=["strategies"])

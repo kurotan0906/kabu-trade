@@ -42,3 +42,42 @@ def test_chart_analysis_create_optional_fields():
     )
     assert data.signals is None
     assert data.screenshot_path is None
+
+
+# API エンドポイントテスト
+import pytest
+from httpx import AsyncClient, ASGITransport
+from app.main import app
+
+
+@pytest.mark.asyncio
+async def test_create_chart_analysis():
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/api/v1/chart-analysis",
+            json={
+                "symbol": "7203",
+                "timeframe": "1D",
+                "trend": "bullish",
+                "signals": {"rsi": "oversold_recovery"},
+                "summary": "日足チャートでは上昇トレンドが継続中",
+                "recommendation": "buy",
+            },
+        )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["symbol"] == "7203"
+    assert data["recommendation"] == "buy"
+    assert "id" in data
+    assert "created_at" in data
+
+
+@pytest.mark.asyncio
+async def test_get_latest_not_found():
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/api/v1/chart-analysis/9999/latest")
+    assert response.status_code == 404
