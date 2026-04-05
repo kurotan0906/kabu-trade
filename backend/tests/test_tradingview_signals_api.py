@@ -61,3 +61,24 @@ async def test_list_signals_returns_latest_per_symbol():
     matching = [s for s in signals if s["symbol"] == "1234"]
     assert len(matching) == 1
     assert matching[0]["recommendation"] == "STRONG_BUY"
+
+
+@pytest.mark.asyncio
+async def test_axes_includes_tradingview_after_post():
+    """TradingView シグナルを POST した後、/scores/{symbol}/axes に TradingView 軸が含まれる"""
+    payload = {
+        "recommendation": "BUY",
+        "score": 75.0,
+        "buy_count": 10,
+        "sell_count": 3,
+        "neutral_count": 5,
+    }
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        await client.post("/api/v1/tradingview-signals/5555", json=payload)
+        axes_res = await client.get("/api/v1/scores/5555/axes")
+    assert axes_res.status_code == 200
+    axes = axes_res.json()["axes"]
+    tv_axes = [a for a in axes if a["name"] == "TradingView"]
+    assert len(tv_axes) == 1
+    assert tv_axes[0]["score"] == 75.0
+    assert tv_axes[0]["recommendation"] == "BUY"
