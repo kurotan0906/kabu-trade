@@ -12,6 +12,7 @@ import type { EvaluationResult as EvaluationResultType } from '@/types/evaluatio
 import ChartAnalysisPanel from '@/components/stock/ChartAnalysisPanel';
 import { chartAnalysisApi } from '@/services/api/chartAnalysisApi';
 import type { ChartAnalysis } from '@/types/chartAnalysis';
+import AnalysisAxesPanel from '@/components/stock/AnalysisAxesPanel';
 
 const StockDetailPage = () => {
   const { code } = useParams<{ code: string }>();
@@ -172,6 +173,9 @@ const StockDetailPage = () => {
           />
         )}
         {chartAnalysis && <ChartAnalysisPanel analysis={chartAnalysis} />}
+
+        {/* 多軸分析パネル */}
+        {code && <AnalysisAxesPanel symbol={code} />}
       </div>
     </div>
   );
