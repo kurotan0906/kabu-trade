@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/mfujii/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(ls /Users/mfujii/src/kabu-trade/frontend/.eslint*)",
+      "Bash(ls /Users/mfujii/src/kabu-trade/.eslint*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('version', 'unknown'\\)\\)\")",
+      "Bash(node -e ':*)",
+      "Bash(curl -sv http://localhost:8000/)",
+      "Bash(docker compose up:*)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(docker compose:*)",
+      "WebSearch",
+      "Bash(pip show:*)",
+      "Bash(uvx tradingview-mcp:*)",
+      "Bash(uv --version)"
+    ]
+  },
+  "mcpServers": {
+    "tradingview": {
+      "command": "uvx",
+      "args": ["tradingview-mcp"],
+      "env": {
+        "TV_USERNAME": "YOUR_TRADINGVIEW_EMAIL",
+        "TV_PASSWORD": "YOUR_TRADINGVIEW_PASSWORD"
+      }
+    }
+  }
+}
