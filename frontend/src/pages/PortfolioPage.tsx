@@ -1,17 +1,12 @@
 import { useEffect, useState } from 'react';
 import { portfolioApi } from '@/services/api/portfolioApi';
+import PhaseIndicator from '@/components/portfolio/PhaseIndicator';
 import type {
   Holding,
   HoldingCreate,
   PortfolioSettings,
   PortfolioSummary,
 } from '@/types/portfolio';
-
-const PHASE_COLORS: Record<string, string> = {
-  積立期: '#10b981',
-  成長期: '#3b82f6',
-  安定期: '#f59e0b',
-};
 
 const formatYen = (v: number | null | undefined) =>
   v == null ? '—' : `¥${Math.round(v).toLocaleString()}`;
@@ -104,24 +99,12 @@ const PortfolioPage = () => {
       </div>
 
       {/* フェーズ表示 */}
-      {summary?.current_phase && (
-        <div
-          style={{
-            padding: '10px 14px',
-            background: '#1f2937',
-            borderLeft: `3px solid ${PHASE_COLORS[summary.current_phase] ?? '#6b7280'}`,
-            borderRadius: 6,
-            marginBottom: 16,
-            fontSize: 13,
-          }}
-        >
-          現在フェーズ:{' '}
-          <strong style={{ color: PHASE_COLORS[summary.current_phase] ?? '#fff' }}>
-            {summary.current_phase}
-          </strong>{' '}
-          — プロファイル自動選択が有効です
-        </div>
-      )}
+      <div style={{ marginBottom: 16 }}>
+        <PhaseIndicator
+          phase={summary?.current_phase ?? null}
+          progressRate={summary?.progress_rate ?? null}
+        />
+      </div>
 
       {/* 目標設定フォーム */}
       <SettingsCard settings={settings} onSave={handleSaveSettings} />

@@ -52,6 +52,7 @@ async def list_scores(
         resp.profile_score = item["profile_score"]
         resp.profile_name = item["profile_name"]
         resp.current_phase = item["current_phase"]
+        resp.adjusted_total_score = item.get("adjusted_total_score")
         out.append(resp)
     return out
 

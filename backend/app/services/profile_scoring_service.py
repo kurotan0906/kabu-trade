@@ -47,17 +47,35 @@ async def list_scores_with_profile(
 
     profile, current_phase = _resolve_profile(profile_key, progress_rate)
 
+    # current_phase が決まっていれば phase_scorer のボーナスも乗せる
+    weights = None
+    if current_phase is not None:
+        from app.analyzer.phase_scorer import get_score_weights, apply_phase_weights, score_to_dict
+        weights = get_score_weights(current_phase)
+
     enriched = []
     for s in scores:
         p_score = compute_phase_score(s, profile)
+        adjusted = None
+        if weights is not None:
+            from app.analyzer.phase_scorer import apply_phase_weights, score_to_dict
+            adjusted_dict = apply_phase_weights(score_to_dict(s), weights)
+            adjusted = adjusted_dict.get("adjusted_total_score")
         enriched.append({
             "score": s,
             "profile_score": p_score,
             "profile_name": profile.name,
             "current_phase": current_phase,
+            "adjusted_total_score": adjusted,
         })
 
-    enriched.sort(key=lambda x: x["profile_score"] or 0, reverse=True)
+    # auto モードでは adjusted_total_score 優先、それ以外は profile_score でソート
+    def _sort_key(item):
+        if item["adjusted_total_score"] is not None:
+            return item["adjusted_total_score"]
+        return item["profile_score"] or 0
+
+    enriched.sort(key=_sort_key, reverse=True)
     return enriched[:limit]
 
 

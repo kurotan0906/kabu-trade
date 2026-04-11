@@ -78,3 +78,15 @@ async def create_trade(payload: TradeCreate, db: AsyncSession = Depends(get_db))
 @router.get("/summary", response_model=PortfolioSummary)
 async def summary(db: AsyncSession = Depends(get_db)):
     return await portfolio_service.get_summary(db)
+
+
+@router.get("/phase")
+async def get_phase(db: AsyncSession = Depends(get_db)):
+    """現在のライフステージ（積立期/成長期/安定期）と推奨プロファイルを返す"""
+    from app.analyzer.phase_scorer import get_phase as _get_phase, profile_for_phase
+    progress = await portfolio_service.calc_progress_rate(db)
+    if progress is None:
+        return {"phase": None, "progress_rate": None, "profile_name": None}
+    phase = _get_phase(progress)
+    profile = profile_for_phase(phase)
+    return {"phase": phase, "progress_rate": progress, "profile_name": profile.name}
