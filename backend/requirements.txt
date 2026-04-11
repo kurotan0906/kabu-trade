@@ -51,5 +51,6 @@ ta>=0.10.2
 apscheduler>=3.10.4
 curl-cffi>=0.6.0
 openpyxl>=3.1.0
+xlrd>=2.0.1
 requests>=2.31.0
 pytz>=2023.3

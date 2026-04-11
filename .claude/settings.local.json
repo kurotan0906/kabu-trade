@@ -18,16 +18,53 @@
       "WebSearch",
       "Bash(pip show:*)",
       "Bash(uvx tradingview-mcp:*)",
-      "Bash(uv --version)"
+      "Bash(uv --version)",
+      "Bash(alembic upgrade:*)",
+      "Bash(python -m pytest tests/test_chart_analysis_api.py -v)",
+      "Bash(python3 -m pytest tests/test_chart_analysis_api.py -v)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(PYTHONPATH=/Users/mfujii/src/kabu-trade/backend python3 -m pytest tests/test_chart_analysis_api.py -v)",
+      "Bash(ls:*)",
+      "Read(//Users/mfujii/.claude/**)",
+      "Bash(uvx --version)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(TV_USERNAME=test TV_PASSWORD=test uvx tradingview-mcp)",
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(claude mcp:*)",
+      "Bash(git:*)",
+      "Bash(bash:*)",
+      "Bash(xargs cat:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(PYTHONPATH=/Users/mfujii/src/kabu-trade/backend python3 -m pytest tests/test_scoring.py -v)",
+      "Bash(PYTHONPATH=/Users/mfujii/src/kabu-trade/backend python3 -m pytest tests/test_scores_api.py -v)",
+      "Bash(PYTHONPATH=/Users/mfujii/src/kabu-trade/backend python3 -m pytest tests/test_chart_analysis_api.py::test_get_latest_not_found -v)",
+      "Bash(PYTHONPATH=/Users/mfujii/src/kabu-trade/backend python3 -m pytest tests/test_scores_api.py::test_get_score_not_found tests/test_scores_api.py::test_get_axes_empty -v)",
+      "Bash(PYTHONPATH=/Users/mfujii/src/kabu-trade/backend python3 -m pytest tests/test_chart_analysis_api.py -v -k \"async\")",
+      "Bash(/Users/mfujii/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/scripts/start-server.sh:*)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/src/main.tsx)",
+      "Bash(curl -s \"http://localhost:5173/src/App.tsx\")",
+      "Bash(curl -s \"http://localhost:5173/src/pages/StockRankingPage.tsx\")",
+      "Bash(curl -s http://localhost:8000/api/v1/scores)",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "mcp__tradingview__get_symbol_info",
+      "mcp__tradingview__get_technical_analysis",
+      "Bash(wc:*)"
     ]
   },
   "mcpServers": {
     "tradingview": {
       "command": "uvx",
-      "args": ["tradingview-mcp"],
+      "args": [
+        "tradingview-mcp"
+      ],
       "env": {
-        "TV_USERNAME": "YOUR_TRADINGVIEW_EMAIL",
-        "TV_PASSWORD": "YOUR_TRADINGVIEW_PASSWORD"
+        "TV_USERNAME": "kurotan0906@gmail.com",
+        "TV_PASSWORD": "rahpoh-roZqyg-8xucka"
       }
     }
   }

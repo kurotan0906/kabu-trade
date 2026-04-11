@@ -100,17 +100,17 @@ const StockChart = ({ prices, period }: StockChartProps) => {
 
     const candleData: CandlestickData[] = prices.map((p) => ({
       time: p.date.split('T')[0] as Time,
-      open: p.open,
-      high: p.high,
-      low: p.low,
-      close: p.close,
+      open: Number(p.open),
+      high: Number(p.high),
+      low: Number(p.low),
+      close: Number(p.close),
     }));
 
     const volumeData: HistogramData[] = prices.map((p) => ({
       time: p.date.split('T')[0] as Time,
-      value: p.volume,
+      value: Number(p.volume),
       color:
-        p.close >= p.open
+        Number(p.close) >= Number(p.open)
           ? 'rgba(38, 166, 154, 0.5)'
           : 'rgba(239, 83, 80, 0.5)',
     }));
