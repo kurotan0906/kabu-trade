@@ -5,34 +5,38 @@ import type { StockScore, BatchStatus, ProfileKey } from '@/types/stockScore';
 import { tradingviewApi } from '@/services/api/tradingviewApi';
 import type { TradingViewSignal } from '@/types/tradingviewSignal';
 import ProfileSelector from '@/components/stock/ProfileSelector';
+import {
+  PageHeader,
+  Toolbar,
+  Button,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Badge,
+  Progress,
+  EmptyState,
+  Card,
+  CardBody,
+} from '@/components/ui';
+import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
 
-const RATING_COLORS: Record<string, string> = {
-  '強い買い': '#3b82f6',
-  '買い': '#10b981',
-  '中立': '#9ca3af',
-  '売り': '#f59e0b',
-  '強い売り': '#ef4444',
+const RATING_TONE: Record<string, 'brand' | 'success' | 'slate' | 'warn' | 'danger'> = {
+  '強い買い': 'brand',
+  '買い': 'success',
+  '中立': 'slate',
+  '売り': 'warn',
+  '強い売り': 'danger',
 };
 
-const TV_COLORS: Record<string, string> = {
-  'STRONG_BUY': '#10b981',
-  'BUY': '#3b82f6',
-  'NEUTRAL': '#9ca3af',
-  'SELL': '#f59e0b',
-  'STRONG_SELL': '#ef4444',
-};
-
-const ScoreBar = ({ score }: { score: number | null }) => {
-  if (score === null) return <span style={{ color: '#4b5563' }}>—</span>;
-  const pct = Math.min(100, Math.max(0, score));
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{ width: 80, height: 4, background: '#374151', borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg,#3b82f6,#8b5cf6)', borderRadius: 2 }} />
-      </div>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', minWidth: 28 }}>{Math.round(pct)}</span>
-    </div>
-  );
+const TV_TONE: Record<string, 'brand' | 'success' | 'slate' | 'warn' | 'danger'> = {
+  STRONG_BUY: 'success',
+  BUY: 'brand',
+  NEUTRAL: 'slate',
+  SELL: 'warn',
+  STRONG_SELL: 'danger',
 };
 
 const StockRankingPage = () => {
@@ -42,6 +46,7 @@ const StockRankingPage = () => {
   const [triggering, setTriggering] = useState(false);
   const [tvSignals, setTvSignals] = useState<Record<string, TradingViewSignal>>({});
   const [profile, setProfile] = useState<ProfileKey | 'none'>('none');
+  const [addTarget, setAddTarget] = useState<{ symbol: string; name: string | null } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,13 +57,17 @@ const StockRankingPage = () => {
       scoresApi.listScores('total_score', 100, profileParam),
       scoresApi.getBatchStatus(),
       tvPromise,
-    ]).then(([s, b, tv]) => {
-      setScores(s);
-      setBatchStatus(b);
-      const map: Record<string, TradingViewSignal> = {};
-      tv.forEach((sig) => { map[sig.symbol] = sig; });
-      setTvSignals(map);
-    }).finally(() => setLoading(false));
+    ])
+      .then(([s, b, tv]) => {
+        setScores(s);
+        setBatchStatus(b);
+        const map: Record<string, TradingViewSignal> = {};
+        tv.forEach((sig) => {
+          map[sig.symbol] = sig;
+        });
+        setTvSignals(map);
+      })
+      .finally(() => setLoading(false));
   }, [profile]);
 
   const handleTriggerBatch = async () => {
@@ -73,144 +82,266 @@ const StockRankingPage = () => {
     }
   };
 
-  if (loading) return <div style={{ padding: 24, color: '#9ca3af' }}>読み込み中...</div>;
+  const primaryScore = (s: StockScore) =>
+    profile === 'none' ? s.total_score : s.profile_score ?? s.total_score;
+
+  const description = batchStatus
+    ? `最終更新: ${
+        batchStatus.finished_at
+          ? new Date(batchStatus.finished_at).toLocaleString('ja-JP')
+          : '未実行'
+      }${batchStatus.status === 'running' ? '（実行中...）' : ''}`
+    : undefined;
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 12 }}>
-        <ProfileSelector value={profile} onChange={setProfile} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700 }}>銘柄スコアランキング</h1>
-          {batchStatus && (
-            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-              最終更新: {batchStatus.finished_at ? new Date(batchStatus.finished_at).toLocaleString('ja-JP') : '未実行'}
-              {batchStatus.status === 'running' && <span style={{ color: '#f59e0b', marginLeft: 8 }}>実行中...</span>}
-            </div>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={handleTriggerBatch}
-            disabled={triggering || batchStatus?.status === 'running'}
-            style={{
-              padding: '8px 16px', background: '#7c3aed', color: 'white',
-              border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 13,
-            }}
-          >
-            {triggering ? '開始中...' : '▶ スコアリング実行'}
-          </button>
-          <button
-            onClick={() =>
-              alert(
-                'Claude Code で「スコア上位100銘柄をTradingView一括分析して /api/v1/tradingview-signals に保存して」と依頼してください'
-              )
-            }
-            style={{
-              padding: '8px 16px',
-              background: '#ea580c',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 600,
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-          >
-            📡 TVバッチ分析
-          </button>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="銘柄スコアランキング"
+        description={description}
+        actions={
+          <>
+            <Button
+              variant="accent"
+              onClick={handleTriggerBatch}
+              disabled={triggering || batchStatus?.status === 'running'}
+            >
+              {triggering ? '開始中...' : 'スコアリング実行'}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                alert(
+                  'Claude Code で「スコア上位100銘柄をTradingView一括分析して /api/v1/tradingview-signals に保存して」と依頼してください'
+                )
+              }
+            >
+              TVバッチ分析
+            </Button>
+          </>
+        }
+      />
 
-      {scores.length === 0 ? (
-        <div style={{ padding: 48, textAlign: 'center', color: '#6b7280' }}>
-          スコアデータがありません。「スコアリング実行」でバッチを開始してください。
-        </div>
+      <Toolbar>
+        <ProfileSelector value={profile} onChange={setProfile} />
+      </Toolbar>
+
+      {loading ? (
+        <div className="p-6 text-sm text-slate-500">読み込み中...</div>
+      ) : scores.length === 0 ? (
+        <EmptyState
+          title="スコアデータがありません"
+          description="「スコアリング実行」ボタンからバッチを開始してください。"
+        />
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #374151' }}>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>#</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>銘柄</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#a78bfa', fontWeight: 600 }}>
-                {profile === 'none' ? '総合スコア ▼' : `${scores[0]?.profile_name ?? 'プロファイル'} ▼`}
-              </th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>レーティング</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>ファンダ</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>テクニカル</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>黒点子</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#fb923c', fontWeight: 600 }}>TVシグナル</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}></th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th className="w-12">#</Th>
+                  <Th>銘柄</Th>
+                  <Th>
+                    {profile === 'none'
+                      ? '総合スコア'
+                      : scores[0]?.profile_name ?? 'プロファイル'}
+                  </Th>
+                  <Th>レーティング</Th>
+                  <Th>ファンダ</Th>
+                  <Th>テクニカル</Th>
+                  <Th>黒点子</Th>
+                  <Th>TVシグナル</Th>
+                  <Th className="text-right">操作</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {scores.map((s, i) => {
+                  const tvSig = tvSignals[s.symbol.replace('.T', '')];
+                  const score = primaryScore(s);
+                  return (
+                    <Tr key={s.id}>
+                      <Td className="text-slate-500">{i + 1}</Td>
+                      <Td>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/stocks/${s.symbol.replace('.T', '')}`)}
+                          className="text-left"
+                        >
+                          <div className="font-semibold text-brand-600 hover:underline">
+                            {s.symbol}
+                          </div>
+                          <div className="text-xs text-slate-500">{s.name ?? '—'}</div>
+                        </button>
+                      </Td>
+                      <Td className="min-w-[140px]">
+                        {score !== null ? (
+                          <div className="flex items-center gap-2">
+                            <Progress value={score} className="w-24" />
+                            <span className="tabular-nums text-xs font-semibold text-slate-700">
+                              {Math.round(score)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </Td>
+                      <Td>
+                        {s.rating ? (
+                          <Badge tone={RATING_TONE[s.rating] ?? 'slate'}>{s.rating}</Badge>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </Td>
+                      <Td className="tabular-nums text-slate-700">
+                        {s.fundamental_score !== null ? Math.round(s.fundamental_score) : '—'}
+                      </Td>
+                      <Td className="tabular-nums text-slate-700">
+                        {s.technical_score !== null ? Math.round(s.technical_score) : '—'}
+                      </Td>
+                      <Td className="tabular-nums text-slate-700">
+                        {s.kurotenko_score !== null
+                          ? `${Math.round(s.kurotenko_score)}%`
+                          : '—'}
+                      </Td>
+                      <Td>
+                        {tvSig && tvSig.recommendation ? (
+                          <Badge tone={TV_TONE[tvSig.recommendation] ?? 'slate'}>
+                            {tvSig.recommendation.replaceAll('_', ' ')}
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </Td>
+                      <Td className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              navigate(`/stocks/${s.symbol.replace('.T', '')}`)
+                            }
+                          >
+                            詳細
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            onClick={() =>
+                              setAddTarget({ symbol: s.symbol, name: s.name })
+                            }
+                          >
+                            追加
+                          </Button>
+                        </div>
+                      </Td>
+                    </Tr>
+                  );
+                })}
+              </Tbody>
+            </Table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden flex flex-col gap-3">
             {scores.map((s, i) => {
               const tvSig = tvSignals[s.symbol.replace('.T', '')];
+              const score = primaryScore(s);
               return (
-                <tr
-                  key={s.id}
-                  style={{ borderBottom: '1px solid #1f2937', cursor: 'pointer' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#1f2937')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '')}
-                >
-                  <td style={{ padding: '10px 12px', color: '#6b7280' }}>{i + 1}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <div style={{ fontWeight: 600, color: '#a78bfa' }}>{s.symbol}</div>
-                    <div style={{ fontSize: 11, color: '#6b7280' }}>{s.name}</div>
-                  </td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <ScoreBar score={profile === 'none' ? s.total_score : (s.profile_score ?? s.total_score)} />
-                  </td>
-                  <td style={{ padding: '10px 12px' }}>
-                    {s.rating ? (
-                      <span style={{
-                        padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600,
-                        background: `${RATING_COLORS[s.rating] ?? '#6b7280'}22`,
-                        color: RATING_COLORS[s.rating] ?? '#6b7280',
-                      }}>{s.rating}</span>
-                    ) : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px', color: '#60a5fa', fontWeight: 600 }}>
-                    {s.fundamental_score !== null ? Math.round(s.fundamental_score) : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px', color: '#34d399', fontWeight: 600 }}>
-                    {s.technical_score !== null ? Math.round(s.technical_score) : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px', color: '#a78bfa', fontWeight: 600 }}>
-                    {s.kurotenko_score !== null ? `${Math.round(s.kurotenko_score)}%` : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px' }}>
-                    {tvSig ? (
-                      <span
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: 12,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          background: `${TV_COLORS[tvSig.recommendation ?? ''] ?? '#6b7280'}22`,
-                          color: TV_COLORS[tvSig.recommendation ?? ''] ?? '#6b7280',
-                        }}
-                      >
-                        {(tvSig.recommendation ?? '—').replaceAll('_', ' ')}
-                      </span>
-                    ) : (
-                      <span style={{ color: '#4b5563', fontSize: 12 }}>—</span>
+                <Card key={s.id}>
+                  <CardBody className="pt-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-xs text-slate-500">#{i + 1}</div>
+                        <div className="font-semibold text-brand-600">{s.symbol}</div>
+                        <div className="text-xs text-slate-500">{s.name ?? '—'}</div>
+                      </div>
+                      {s.rating && (
+                        <Badge tone={RATING_TONE[s.rating] ?? 'slate'}>{s.rating}</Badge>
+                      )}
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-xs text-slate-500 mb-1">
+                        {profile === 'none'
+                          ? '総合スコア'
+                          : s.profile_name ?? 'プロファイル'}
+                      </div>
+                      {score !== null ? (
+                        <div className="flex items-center gap-2">
+                          <Progress value={score} className="flex-1" />
+                          <span className="text-xs font-semibold tabular-nums">
+                            {Math.round(score)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-sm">—</span>
+                      )}
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-slate-600">
+                      <div>
+                        <div className="text-slate-400">ファンダ</div>
+                        <div className="tabular-nums font-semibold">
+                          {s.fundamental_score !== null
+                            ? Math.round(s.fundamental_score)
+                            : '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400">テクニカル</div>
+                        <div className="tabular-nums font-semibold">
+                          {s.technical_score !== null
+                            ? Math.round(s.technical_score)
+                            : '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400">黒点子</div>
+                        <div className="tabular-nums font-semibold">
+                          {s.kurotenko_score !== null
+                            ? `${Math.round(s.kurotenko_score)}%`
+                            : '—'}
+                        </div>
+                      </div>
+                    </div>
+                    {tvSig && tvSig.recommendation && (
+                      <div className="mt-3">
+                        <Badge tone={TV_TONE[tvSig.recommendation] ?? 'slate'}>
+                          TV: {tvSig.recommendation.replaceAll('_', ' ')}
+                        </Badge>
+                      </div>
                     )}
-                  </td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <button
-                      onClick={() => navigate(`/stocks/${s.symbol.replace('.T', '')}`)}
-                      style={{ fontSize: 12, color: '#9ca3af', background: '#374151', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
-                    >
-                      詳細 →
-                    </button>
-                  </td>
-                </tr>
+                    <div className="mt-4 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={() => navigate(`/stocks/${s.symbol.replace('.T', '')}`)}
+                      >
+                        詳細
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="accent"
+                        className="flex-1"
+                        onClick={() => setAddTarget({ symbol: s.symbol, name: s.name })}
+                      >
+                        追加
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        </>
+      )}
+
+      {addTarget && (
+        <AddHoldingDialog
+          open={!!addTarget}
+          onClose={() => setAddTarget(null)}
+          symbol={addTarget.symbol}
+          name={addTarget.name}
+        />
       )}
     </div>
   );
