@@ -5,14 +5,24 @@ import StockInfo from '@/components/stock/StockInfo';
 import StockChart from '@/components/stock/StockChart';
 import PeriodSelector from '@/components/stock/PeriodSelector';
 import EvaluationResult from '@/components/stock/EvaluationResult';
-import Loading from '@/components/common/Loading';
-import ErrorMessage from '@/components/common/ErrorMessage';
-import { evaluationApi } from '@/services/api/evaluationApi';
-import type { EvaluationResult as EvaluationResultType } from '@/types/evaluation';
 import ChartAnalysisPanel from '@/components/stock/ChartAnalysisPanel';
-import { chartAnalysisApi } from '@/services/api/chartAnalysisApi';
-import type { ChartAnalysis } from '@/types/chartAnalysis';
 import AnalysisAxesPanel from '@/components/stock/AnalysisAxesPanel';
+import { evaluationApi } from '@/services/api/evaluationApi';
+import { chartAnalysisApi } from '@/services/api/chartAnalysisApi';
+import type { EvaluationResult as EvaluationResultType } from '@/types/evaluation';
+import type { ChartAnalysis } from '@/types/chartAnalysis';
+import {
+  PageHeader,
+  Button,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Card,
+  CardBody,
+  EmptyState,
+} from '@/components/ui';
+import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
 
 const StockDetailPage = () => {
   const { code } = useParams<{ code: string }>();
@@ -24,6 +34,7 @@ const StockDetailPage = () => {
   const [chartAnalysisLoading, setChartAnalysisLoading] = useState(false);
   const [chartAnalysisError, setChartAnalysisError] = useState<string | null>(null);
   const [axesRefreshKey, setAxesRefreshKey] = useState(0);
+  const [addOpen, setAddOpen] = useState(false);
   const { currentStock, stockPrices, loading, error, fetchStock, fetchPrices, clearError } =
     useStockStore();
 
@@ -31,10 +42,12 @@ const StockDetailPage = () => {
     if (code) {
       fetchStock(code);
       fetchPrices(code, period);
-      // 最新のチャート分析があれば取得
-      chartAnalysisApi.getLatest(code).then(setChartAnalysis).catch(() => {
-        // 未分析の場合はエラーを無視
-      });
+      chartAnalysisApi
+        .getLatest(code)
+        .then(setChartAnalysis)
+        .catch(() => {
+          // ignore when no analysis exists
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, period]);
@@ -93,107 +106,132 @@ const StockDetailPage = () => {
   };
 
   if (loading && !currentStock) {
-    return <Loading />;
+    return <div className="p-6 text-sm text-slate-500">読み込み中...</div>;
   }
 
   if (error) {
     return (
-      <div>
-        <ErrorMessage message={error} onClose={clearError} />
-        <button onClick={() => code && fetchStock(code)}>再試行</button>
+      <div className="flex flex-col gap-3">
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+        <div>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              clearError();
+              if (code) fetchStock(code);
+            }}
+          >
+            再試行
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!currentStock) {
-    return <div>銘柄情報が見つかりません</div>;
+    return <EmptyState title="銘柄情報が見つかりません" />;
   }
 
   return (
     <div>
-      <StockInfo stock={currentStock} />
-      {stockPrices && (
-        <div>
-          <PeriodSelector currentPeriod={period} onPeriodChange={handlePeriodChange} />
-          {loading && <Loading />}
-          {stockPrices.prices.length > 0 ? (
-            <StockChart prices={stockPrices.prices} period={stockPrices.period} />
-          ) : (
-            <p>データがありません</p>
-          )}
-        </div>
+      <PageHeader
+        title={`${currentStock.name ?? ''} (${currentStock.code})`}
+        description="スコア・チャート・多軸分析を確認できます。"
+        actions={
+          <Button variant="accent" onClick={() => setAddOpen(true)}>
+            ポートフォリオに追加
+          </Button>
+        }
+      />
+
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">概要</TabsTrigger>
+          <TabsTrigger value="chart">チャート</TabsTrigger>
+          <TabsTrigger value="axes">分析軸</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <div className="flex flex-col gap-4">
+            <StockInfo stock={currentStock} />
+
+            <Card>
+              <CardBody className="pt-5">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="accent"
+                    onClick={handleEvaluate}
+                    disabled={evaluationLoading}
+                  >
+                    {evaluationLoading ? '評価中...' : '評価を実行'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleChartAnalysis}
+                    disabled={chartAnalysisLoading}
+                  >
+                    {chartAnalysisLoading ? '取得中...' : 'チャート分析を更新'}
+                  </Button>
+                </div>
+                {evaluationError && (
+                  <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                    {evaluationError}
+                  </div>
+                )}
+                {chartAnalysisError && (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                    {chartAnalysisError}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {evaluation && <EvaluationResult evaluation={evaluation} />}
+            {chartAnalysis && <ChartAnalysisPanel analysis={chartAnalysis} />}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="chart">
+          <div className="flex flex-col gap-4">
+            <Card>
+              <CardBody className="pt-5">
+                <PeriodSelector currentPeriod={period} onPeriodChange={handlePeriodChange} />
+                {stockPrices && stockPrices.prices.length > 0 ? (
+                  <StockChart prices={stockPrices.prices} period={stockPrices.period} />
+                ) : (
+                  <p className="text-sm text-slate-500">データがありません</p>
+                )}
+              </CardBody>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="axes">
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setAxesRefreshKey((k) => k + 1)}
+              >
+                TradingView 更新
+              </Button>
+            </div>
+            {code && <AnalysisAxesPanel key={axesRefreshKey} symbol={code} />}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {currentStock && (
+        <AddHoldingDialog
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          symbol={currentStock.code}
+          name={currentStock.name ?? null}
+        />
       )}
-
-      {/* 評価機能 */}
-      <div style={{ marginTop: '2rem' }}>
-        <button
-          onClick={handleEvaluate}
-          disabled={evaluationLoading}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: evaluationLoading ? 'not-allowed' : 'pointer',
-            opacity: evaluationLoading ? 0.6 : 1,
-          }}
-        >
-          {evaluationLoading ? '評価中...' : '評価を実行'}
-        </button>
-
-        <button
-          onClick={handleChartAnalysis}
-          disabled={chartAnalysisLoading}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            backgroundColor: '#6200ea',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: chartAnalysisLoading ? 'not-allowed' : 'pointer',
-            opacity: chartAnalysisLoading ? 0.6 : 1,
-            marginLeft: '1rem',
-          }}
-        >
-          {chartAnalysisLoading ? '取得中...' : 'チャート分析を更新'}
-        </button>
-
-        <button
-          onClick={() => setAxesRefreshKey((k) => k + 1)}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            backgroundColor: '#ea580c',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginLeft: '1rem',
-          }}
-        >
-          TradingView 更新
-        </button>
-
-        {evaluationError && (
-          <ErrorMessage message={evaluationError} onClose={() => setEvaluationError(null)} />
-        )}
-
-        {evaluation && <EvaluationResult evaluation={evaluation} />}
-
-        {chartAnalysisError && (
-          <ErrorMessage
-            message={chartAnalysisError}
-            onClose={() => setChartAnalysisError(null)}
-          />
-        )}
-        {chartAnalysis && <ChartAnalysisPanel analysis={chartAnalysis} />}
-
-        {/* 多軸分析パネル */}
-        {code && <AnalysisAxesPanel key={axesRefreshKey} symbol={code} />}
-      </div>
     </div>
   );
 };
