@@ -1,12 +1,26 @@
 import { NavLink } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NAV_ITEMS } from './NavLinks';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { MobileDrawer } from './MobileDrawer';
+import { CommandPalette } from '@/components/search/CommandPalette';
 
 export const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 h-14 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex h-full max-w-6xl items-center gap-4 px-4 md:px-6">
@@ -44,13 +58,19 @@ export const Header = () => {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="secondary" size="sm" aria-label="銘柄検索">
-            🔍
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setSearchOpen(true)}
+            aria-label="銘柄検索"
+          >
+            🔍 <span className="hidden md:inline text-slate-400 text-xs">⌘K</span>
           </Button>
           <Button variant="accent" size="sm">▶ バッチ</Button>
         </div>
       </div>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 };
