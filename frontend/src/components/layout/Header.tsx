@@ -5,10 +5,12 @@ import { Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { MobileDrawer } from './MobileDrawer';
 import { CommandPalette } from '@/components/search/CommandPalette';
+import { BatchDialog } from '@/components/batch/BatchDialog';
 
 export const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,11 +68,18 @@ export const Header = () => {
           >
             🔍 <span className="hidden md:inline text-slate-400 text-xs">⌘K</span>
           </Button>
-          <Button variant="accent" size="sm">▶ バッチ</Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => setBatchOpen(true)}
+          >
+            ▶ バッチ
+          </Button>
         </div>
       </div>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <BatchDialog open={batchOpen} onClose={() => setBatchOpen(false)} />
     </header>
   );
 };
