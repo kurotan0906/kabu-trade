@@ -19,8 +19,8 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 BATCH_REDIS_KEY = "batch:scoring:status"
-# tradingview-ta のレート制限を避けるためデフォルトは控えめ。設定で上書き可能。
-DEFAULT_MAX_WORKERS = 4
+# yfinance は並列で 429 になりやすい。SCORING_MAX_WORKERS 未設定時のフォールバックは 1。
+DEFAULT_MAX_WORKERS = 1
 RETRY_BACKOFF_SECONDS = (1.0, 3.0)  # 1 回リトライ時の待機
 
 

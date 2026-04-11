@@ -30,7 +30,10 @@ class Settings(BaseSettings):
     # tv:     TradingView のみ（history が取れないため技術スコアは低下）
     # yfinance: yfinance のみ（従来動作）
     SCORING_DATA_SOURCE: Literal["hybrid", "tv", "yfinance"] = "hybrid"
-    SCORING_MAX_WORKERS: int = 4
+    # yfinance は並列で叩くとレート制限で失敗しやすいため既定は 1（直列）
+    SCORING_MAX_WORKERS: int = 1
+    # バッチ時の yfinance 呼び出し間隔（秒）。>0 でスレッド間ロック付きスロットル（429 対策）
+    SCORING_YFINANCE_MIN_INTERVAL_SEC: float = 0.0
 
     # J-Quants API (PoC)
     JQUANTS_API_URL: str = "https://api.jpx-jquants.com/v1"

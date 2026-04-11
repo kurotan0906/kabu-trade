@@ -47,6 +47,9 @@ services:
       DEBUG: ${DEBUG:-True}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # yfinance は並列でレート制限されやすいため既定は 1（.env で上書き可）
+      SCORING_MAX_WORKERS: ${SCORING_MAX_WORKERS:-1}
+      SCORING_YFINANCE_MIN_INTERVAL_SEC: ${SCORING_YFINANCE_MIN_INTERVAL_SEC:-0.35}
     ports:
       - "8000:8000"
     volumes:
@@ -68,7 +71,9 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules  # node_modulesを除外（ホストのnode_modulesを使用しない）
+      # ホストをマウントするとイメージ内の node_modules は見えない。匿名ボリュームで保持するが、
+      # 依存追加後は古いボリュームだと欠ける。frontend の entrypoint で npm install して同期する。
+      - /app/node_modules
     environment:
       - VITE_API_BASE_URL=http://backend:8000
     depends_on:

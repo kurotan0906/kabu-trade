@@ -4,10 +4,29 @@ yfinance は同期ライブラリ。async 環境からは run_in_executor 経由
 """
 
 import logging
+import threading
 import time
 from typing import Optional
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
+
+_yf_throttle_lock = threading.Lock()
+_yf_last_monotonic = 0.0
+
+
+def _throttle_yfinance() -> None:
+    sec = settings.SCORING_YFINANCE_MIN_INTERVAL_SEC
+    if sec <= 0:
+        return
+    global _yf_last_monotonic
+    with _yf_throttle_lock:
+        now = time.monotonic()
+        wait = sec - (now - _yf_last_monotonic)
+        if wait > 0:
+            time.sleep(wait)
+        _yf_last_monotonic = time.monotonic()
 
 MAX_RETRIES = 2
 RETRY_SLEEP = 1.0
@@ -30,6 +49,7 @@ def fetch_stock_data(symbol: str) -> Optional[dict]:
 
     for attempt in range(MAX_RETRIES + 1):
         try:
+            _throttle_yfinance()
             ticker = yf.Ticker(symbol, session=_YF_SESSION)
             history = ticker.history(period="1y")
             if history.empty:

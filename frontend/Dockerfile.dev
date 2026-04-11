@@ -1,13 +1,15 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# 依存関係のインストール
+COPY docker-entrypoint.dev.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.dev.sh
+
+# 初回イメージビルド用（匿名ボリュームの初回やオフライン時のベース）
 COPY package.json package-lock.json ./
 RUN npm install
 
-# ポート公開
 EXPOSE 5173
 
-# 開発サーバー起動（ホットリロード有効）
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.dev.sh"]
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -76,8 +76,11 @@ def fetch_stock_data_tv(symbol: str) -> Optional[dict]:
     """
     try:
         from tradingview_ta import TA_Handler, Interval
-    except ImportError:
-        logger.error("tradingview_ta が未インストール: requirements.txt に追加してください")
+    except ImportError as e:
+        logger.error(
+            "tradingview_ta を import できません（コンテナなら backend イメージの再ビルドと pip install を確認）: %s",
+            e,
+        )
         return None
 
     pair = symbol_to_tv(symbol)
