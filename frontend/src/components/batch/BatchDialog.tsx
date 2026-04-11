@@ -30,7 +30,6 @@ export const BatchDialog = ({ open, onClose }: Props) => {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    let timer: number | undefined;
 
     const poll = async () => {
       try {
@@ -42,10 +41,10 @@ export const BatchDialog = ({ open, onClose }: Props) => {
     };
 
     poll();
-    timer = window.setInterval(poll, 5000);
+    const timer = window.setInterval(poll, 5000);
     return () => {
       cancelled = true;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [open]);
 

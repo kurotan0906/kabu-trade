@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react';
 import { advisorApi } from '@/services/api/advisorApi';
 import type { HistoryEntry } from '@/types/advisor';
+import {
+  PageHeader,
+  Card,
+  CardBody,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  EmptyState,
+} from '@/components/ui';
 
 const formatYen = (v: unknown) => {
   const n = Number(v);
@@ -9,70 +21,103 @@ const formatYen = (v: unknown) => {
 };
 
 const AnalysisHistoryPage = () => {
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
 
   useEffect(() => {
-    advisorApi
-      .listHistory()
-      .then(setEntries)
-      .finally(() => setLoading(false));
+    advisorApi.listHistory().then(setEntries).catch(() => setEntries([]));
   }, []);
 
-  if (loading) return <div style={{ padding: 24, color: '#9ca3af' }}>読み込み中...</div>;
+  if (entries === null) {
+    return (
+      <Card>
+        <CardBody className="text-sm text-slate-500">読み込み中...</CardBody>
+      </Card>
+    );
+  }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto', color: '#e5e7eb' }}>
-      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>シミュレーション履歴</h1>
+    <>
+      <PageHeader title="シミュレーション履歴" description="過去の将来価値計算ログ" />
+
       {entries.length === 0 ? (
-        <div style={{ padding: 48, textAlign: 'center', color: '#6b7280' }}>
-          履歴がありません。シミュレータから計算を実行すると記録されます。
-        </div>
+        <EmptyState
+          title="履歴がありません"
+          description="シミュレータから計算を実行すると記録されます"
+        />
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #374151', color: '#6b7280' }}>
-              <th style={th}>日時</th>
-              <th style={th}>現在額</th>
-              <th style={th}>積立</th>
-              <th style={th}>年利</th>
-              <th style={th}>期間</th>
-              <th style={th}>最終評価額</th>
-              <th style={th}>運用益</th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          <div className="hidden md:block">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>日時</Th>
+                  <Th>現在額</Th>
+                  <Th>積立</Th>
+                  <Th>年利</Th>
+                  <Th>期間</Th>
+                  <Th>最終評価額</Th>
+                  <Th>運用益</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {entries.map((e) => {
+                  const i = e.input_json as Record<string, number>;
+                  const r = e.result_json as Record<string, number>;
+                  return (
+                    <Tr key={e.id}>
+                      <Td className="text-slate-500">
+                        {new Date(e.created_at).toLocaleString('ja-JP')}
+                      </Td>
+                      <Td className="tabular-nums">{formatYen(i.pv)}</Td>
+                      <Td className="tabular-nums">{formatYen(i.monthly_investment)}/月</Td>
+                      <Td className="tabular-nums">{((i.annual_rate ?? 0) * 100).toFixed(2)}%</Td>
+                      <Td>{i.years}年</Td>
+                      <Td className="font-semibold tabular-nums text-brand-600">
+                        {formatYen(r.final_value)}
+                      </Td>
+                      <Td
+                        className={`font-semibold tabular-nums ${(r.total_gain ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                      >
+                        {formatYen(r.total_gain)}
+                      </Td>
+                    </Tr>
+                  );
+                })}
+              </Tbody>
+            </Table>
+          </div>
+
+          <div className="space-y-3 md:hidden">
             {entries.map((e) => {
               const i = e.input_json as Record<string, number>;
               const r = e.result_json as Record<string, number>;
               return (
-                <tr key={e.id} style={{ borderBottom: '1px solid #1f2937' }}>
-                  <td style={td}>{new Date(e.created_at).toLocaleString('ja-JP')}</td>
-                  <td style={td}>{formatYen(i.pv)}</td>
-                  <td style={td}>{formatYen(i.monthly_investment)}/月</td>
-                  <td style={td}>{((i.annual_rate ?? 0) * 100).toFixed(2)}%</td>
-                  <td style={td}>{i.years}年</td>
-                  <td style={{ ...td, color: '#a78bfa', fontWeight: 600 }}>{formatYen(r.final_value)}</td>
-                  <td
-                    style={{
-                      ...td,
-                      color: (r.total_gain ?? 0) >= 0 ? '#10b981' : '#ef4444',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {formatYen(r.total_gain)}
-                  </td>
-                </tr>
+                <Card key={e.id}>
+                  <CardBody className="space-y-1.5">
+                    <div className="text-xs text-slate-500">
+                      {new Date(e.created_at).toLocaleString('ja-JP')}
+                    </div>
+                    <div className="text-lg font-bold tabular-nums text-brand-600">
+                      {formatYen(r.final_value)}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      {formatYen(i.pv)} + {formatYen(i.monthly_investment)}/月 × {i.years}年 @{' '}
+                      {((i.annual_rate ?? 0) * 100).toFixed(1)}%
+                    </div>
+                    <div
+                      className={`text-xs font-semibold ${(r.total_gain ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                    >
+                      運用益 {formatYen(r.total_gain)}
+                    </div>
+                  </CardBody>
+                </Card>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        </>
       )}
-    </div>
+    </>
   );
 };
-
-const th: React.CSSProperties = { padding: '8px 12px', textAlign: 'left', fontWeight: 600 };
-const td: React.CSSProperties = { padding: '10px 12px' };
 
 export default AnalysisHistoryPage;

@@ -38,8 +38,7 @@ const FutureValueChart = ({ data, width = 720, height = 320 }: Props) => {
     <div className="w-full">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-auto"
-        style={{ background: '#ffffff', borderRadius: 8 }}
+        className="h-auto w-full rounded-lg bg-white"
       >
         {/* Y grid */}
         {tickValues.map((v) => (

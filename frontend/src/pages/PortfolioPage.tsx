@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { portfolioApi } from '@/services/api/portfolioApi';
-import PhaseIndicator from '@/components/portfolio/PhaseIndicator';
 import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
 import type { Holding, PortfolioSettings, PortfolioSummary } from '@/types/portfolio';
 import {
@@ -21,7 +20,35 @@ import {
   Field,
   NumberInput,
   Input,
+  Progress,
 } from '@/components/ui';
+
+const PHASE_PANEL: Record<
+  string,
+  { badge: 'success' | 'sky' | 'warn'; border: string; bg: string; desc: string; progressTone: 'success' | 'brand' | 'warn' }
+> = {
+  積立期: {
+    badge: 'success',
+    border: 'border-l-emerald-500',
+    bg: 'bg-emerald-50/70',
+    desc: '進捗30%未満 — 高リスク・高成長を追求',
+    progressTone: 'success',
+  },
+  成長期: {
+    badge: 'sky',
+    border: 'border-l-sky-500',
+    bg: 'bg-sky-50/70',
+    desc: '進捗30〜70% — 分散とバランス重視',
+    progressTone: 'brand',
+  },
+  安定期: {
+    badge: 'warn',
+    border: 'border-l-amber-500',
+    bg: 'bg-amber-50/70',
+    desc: '進捗70%以上 — 配当・低ボラで資産保全',
+    progressTone: 'warn',
+  },
+};
 
 const formatYen = (v: number | null | undefined) =>
   v == null ? '—' : `¥${Math.round(v).toLocaleString()}`;
@@ -31,6 +58,42 @@ const accountLabel = (t: Holding['account_type']) =>
 
 const accountTone = (t: Holding['account_type']): 'brand' | 'warn' | 'slate' =>
   t === 'nisa_growth' ? 'warn' : t === 'nisa_tsumitate' ? 'brand' : 'slate';
+
+function PhaseSection({ summary }: { summary: PortfolioSummary | null }) {
+  if (!summary?.current_phase) {
+    return (
+      <Card>
+        <CardBody className="text-sm text-slate-600">
+          目標額が未設定のためフェーズ判定できません
+        </CardBody>
+      </Card>
+    );
+  }
+  const phase = summary.current_phase;
+  const meta =
+    PHASE_PANEL[phase] ?? {
+      badge: 'slate' as const,
+      border: 'border-l-slate-400',
+      bg: 'bg-slate-50',
+      desc: '',
+      progressTone: 'brand' as const,
+    };
+  const pr = summary.progress_rate ?? 0;
+  return (
+    <Card className={`border-l-4 ${meta.border} ${meta.bg}`}>
+      <CardBody className="space-y-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <Badge tone={meta.badge}>{phase}</Badge>
+          <span className="text-sm text-slate-700">
+            進捗 {summary.progress_rate != null ? `${summary.progress_rate.toFixed(1)}%` : '—'}
+          </span>
+        </div>
+        {meta.desc ? <p className="text-xs text-slate-600">{meta.desc}</p> : null}
+        <Progress value={pr} tone={meta.progressTone} />
+      </CardBody>
+    </Card>
+  );
+}
 
 const PortfolioPage = () => {
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -107,10 +170,7 @@ const PortfolioPage = () => {
             <Stat label="NISA成長枠 残" value={formatYen(summary?.nisa_remaining)} />
           </div>
 
-          <PhaseIndicator
-            phase={summary?.current_phase ?? null}
-            progressRate={summary?.progress_rate ?? null}
-          />
+          <PhaseSection summary={summary} />
 
           <Card>
             <CardBody>

@@ -6,12 +6,12 @@ interface Props {
   symbol: string;
 }
 
-const AXIS_COLORS: Record<string, string> = {
-  ファンダメンタル: 'bg-blue-500',
-  テクニカル: 'bg-emerald-500',
-  黒点子: 'bg-violet-500',
-  チャート分析: 'bg-amber-500',
-  TradingView: 'bg-orange-500',
+const AXIS_FILLS: Record<string, string> = {
+  ファンダメンタル: 'fill-blue-500',
+  テクニカル: 'fill-emerald-500',
+  黒点子: 'fill-violet-500',
+  チャート分析: 'fill-amber-500',
+  TradingView: 'fill-orange-500',
 };
 
 const AXIS_BORDER: Record<string, string> = {
@@ -30,18 +30,22 @@ const AXIS_TEXT: Record<string, string> = {
   TradingView: 'text-orange-600',
 };
 
-const ScoreBar = ({ score, barClass, textClass }: { score: number; barClass: string; textClass: string }) => (
-  <div className="mt-2 flex items-center gap-2">
-    <div className="h-1.5 flex-1 overflow-hidden rounded bg-slate-200">
-      <div className={`h-full rounded ${barClass}`} style={{ width: `${score}%` }} />
+const ScoreBar = ({ score, fillClass, textClass }: { score: number; fillClass: string; textClass: string }) => {
+  const w = Math.min(100, Math.max(0, score));
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <svg className="h-1.5 min-w-0 flex-1" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden>
+        <rect className="fill-slate-200" width={100} height={4} rx={2} />
+        <rect className={fillClass} width={w} height={4} rx={2} />
+      </svg>
+      <span className={`min-w-[36px] text-sm font-bold ${textClass}`}>{Math.round(score)}</span>
     </div>
-    <span className={`min-w-[36px] text-sm font-bold ${textClass}`}>{Math.round(score)}</span>
-  </div>
-);
+  );
+};
 
 const AxisCard = ({ axis }: { axis: AnalysisAxis }) => {
   const [expanded, setExpanded] = useState(false);
-  const barClass = AXIS_COLORS[axis.name] ?? 'bg-slate-400';
+  const fillClass = AXIS_FILLS[axis.name] ?? 'fill-slate-400';
   const borderClass = AXIS_BORDER[axis.name] ?? 'border-t-slate-400';
   const textClass = AXIS_TEXT[axis.name] ?? 'text-slate-500';
 
@@ -52,7 +56,7 @@ const AxisCard = ({ axis }: { axis: AnalysisAxis }) => {
       </div>
 
       {axis.score !== null ? (
-        <ScoreBar score={axis.score} barClass={barClass} textClass={textClass} />
+        <ScoreBar score={axis.score} fillClass={fillClass} textClass={textClass} />
       ) : axis.recommendation ? (
         <div className={`mt-2 text-lg font-bold ${textClass}`}>
           {axis.recommendation.toUpperCase()}
@@ -113,7 +117,7 @@ const AnalysisAxesPanel = ({ symbol }: Props) => {
   return (
     <div className="mt-4">
       <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">多軸分析</h3>
-      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         {axes.axes.map((axis) => (
           <AxisCard key={axis.name} axis={axis} />
         ))}

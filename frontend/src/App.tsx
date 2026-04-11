@@ -5,7 +5,6 @@ import StockRankingPage from './pages/StockRankingPage'
 import PortfolioPage from './pages/PortfolioPage'
 import SimulatorPage from './pages/SimulatorPage'
 import AnalysisHistoryPage from './pages/AnalysisHistoryPage'
-import UiSandboxPage from './pages/__UiSandboxPage'
 import { AppShell } from './components/layout/AppShell'
 import './App.css'
 
@@ -20,7 +19,6 @@ function App() {
           <Route path="/simulator" element={<SimulatorPage />} />
           <Route path="/history" element={<AnalysisHistoryPage />} />
           <Route path="/stocks/:code" element={<StockDetailPage />} />
-          <Route path="/__ui" element={<UiSandboxPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
