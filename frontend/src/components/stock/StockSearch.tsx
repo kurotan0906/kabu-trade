@@ -17,32 +17,18 @@ const StockSearch = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '400px', margin: '0 auto' }}>
+    <form onSubmit={handleSubmit} className="mb-8">
+      <div className="mx-auto flex max-w-md gap-2">
         <input
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="銘柄コードを入力（例: 7203）"
-          style={{
-            flex: 1,
-            padding: '0.5rem',
-            fontSize: '1rem',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-          }}
+          className="flex-1 rounded border border-slate-200 px-3 py-2 text-base text-slate-900 placeholder:text-slate-500 focus:border-brand-600 focus:outline-none"
         />
         <button
           type="submit"
-          style={{
-            padding: '0.5rem 1rem',
-            fontSize: '1rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
+          className="cursor-pointer rounded border-none bg-brand-600 px-4 py-2 text-base text-white hover:bg-brand-700"
         >
           検索
         </button>

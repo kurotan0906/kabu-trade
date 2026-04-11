@@ -7,67 +7,82 @@ interface Props {
 }
 
 const AXIS_COLORS: Record<string, string> = {
-  'ファンダメンタル': '#3b82f6',
-  'テクニカル': '#10b981',
-  '黒点子': '#8b5cf6',
-  'チャート分析': '#f59e0b',
-  'TradingView': '#f97316',
+  ファンダメンタル: 'bg-blue-500',
+  テクニカル: 'bg-emerald-500',
+  黒点子: 'bg-violet-500',
+  チャート分析: 'bg-amber-500',
+  TradingView: 'bg-orange-500',
 };
 
-const ScoreBar = ({ score, color }: { score: number; color: string }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-    <div style={{ flex: 1, height: 6, background: '#374151', borderRadius: 3, overflow: 'hidden' }}>
-      <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 3 }} />
+const AXIS_BORDER: Record<string, string> = {
+  ファンダメンタル: 'border-t-blue-500',
+  テクニカル: 'border-t-emerald-500',
+  黒点子: 'border-t-violet-500',
+  チャート分析: 'border-t-amber-500',
+  TradingView: 'border-t-orange-500',
+};
+
+const AXIS_TEXT: Record<string, string> = {
+  ファンダメンタル: 'text-blue-600',
+  テクニカル: 'text-emerald-600',
+  黒点子: 'text-violet-600',
+  チャート分析: 'text-amber-600',
+  TradingView: 'text-orange-600',
+};
+
+const ScoreBar = ({ score, barClass, textClass }: { score: number; barClass: string; textClass: string }) => (
+  <div className="mt-2 flex items-center gap-2">
+    <div className="h-1.5 flex-1 overflow-hidden rounded bg-slate-200">
+      <div className={`h-full rounded ${barClass}`} style={{ width: `${score}%` }} />
     </div>
-    <span style={{ fontSize: 13, fontWeight: 700, color, minWidth: 36 }}>{Math.round(score)}</span>
+    <span className={`min-w-[36px] text-sm font-bold ${textClass}`}>{Math.round(score)}</span>
   </div>
 );
 
 const AxisCard = ({ axis }: { axis: AnalysisAxis }) => {
   const [expanded, setExpanded] = useState(false);
-  const color = AXIS_COLORS[axis.name] ?? '#6b7280';
+  const barClass = AXIS_COLORS[axis.name] ?? 'bg-slate-400';
+  const borderClass = AXIS_BORDER[axis.name] ?? 'border-t-slate-400';
+  const textClass = AXIS_TEXT[axis.name] ?? 'text-slate-500';
 
   return (
-    <div
-      style={{
-        border: `1px solid #374151`,
-        borderRadius: 10,
-        padding: '14px 16px',
-        background: '#1f2937',
-        borderTop: `3px solid ${color}`,
-      }}
-    >
-      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#9ca3af', letterSpacing: '0.5px' }}>
+    <div className={`rounded-lg border border-slate-200 border-t-[3px] bg-white px-4 py-3.5 ${borderClass}`}>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
         {axis.name}
       </div>
 
       {axis.score !== null ? (
-        <ScoreBar score={axis.score} color={color} />
+        <ScoreBar score={axis.score} barClass={barClass} textClass={textClass} />
       ) : axis.recommendation ? (
-        <div style={{ marginTop: 8, fontSize: 18, fontWeight: 700, color }}>
+        <div className={`mt-2 text-lg font-bold ${textClass}`}>
           {axis.recommendation.toUpperCase()}
         </div>
       ) : (
-        <div style={{ marginTop: 8, fontSize: 13, color: '#6b7280' }}>データなし</div>
+        <div className="mt-2 text-sm text-slate-500">データなし</div>
       )}
 
       <button
         onClick={() => setExpanded(!expanded)}
-        style={{
-          marginTop: 10, fontSize: 11, color: '#6b7280', background: 'none',
-          border: 'none', cursor: 'pointer', padding: 0,
-        }}
+        className="mt-2.5 cursor-pointer border-none bg-transparent p-0 text-[11px] text-slate-500"
       >
         {expanded ? '▲ 閉じる' : '▼ 詳細'}
       </button>
 
       {expanded && (
-        <div style={{ marginTop: 8, borderTop: '1px solid #374151', paddingTop: 8 }}>
+        <div className="mt-2 border-t border-slate-200 pt-2">
           {Object.entries(axis.detail).map(([key, value]) =>
             value !== null && value !== undefined && typeof value !== 'object' ? (
-              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 12 }}>
-                <span style={{ color: '#9ca3af' }}>{key}</span>
-                <span style={{ fontWeight: 600, color: value === true ? '#34d399' : value === false ? '#f87171' : '#e5e7eb' }}>
+              <div key={key} className="flex justify-between py-0.5 text-xs">
+                <span className="text-slate-500">{key}</span>
+                <span
+                  className={`font-semibold ${
+                    value === true
+                      ? 'text-emerald-600'
+                      : value === false
+                        ? 'text-rose-500'
+                        : 'text-slate-900'
+                  }`}
+                >
                   {typeof value === 'boolean' ? (value ? '✓' : '✗') : String(value)}
                 </span>
               </div>
@@ -84,21 +99,21 @@ const AnalysisAxesPanel = ({ symbol }: Props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    scoresApi.getAxes(symbol)
+    scoresApi
+      .getAxes(symbol)
       .then(setAxes)
       .catch(() => setAxes(null))
       .finally(() => setLoading(false));
   }, [symbol]);
 
-  if (loading) return <div style={{ color: '#6b7280', fontSize: 13 }}>分析軸を読み込み中...</div>;
-  if (!axes || axes.axes.length === 0) return <div style={{ color: '#6b7280', fontSize: 13 }}>スコアデータがありません（バッチ未実行）</div>;
+  if (loading) return <div className="text-sm text-slate-500">分析軸を読み込み中...</div>;
+  if (!axes || axes.axes.length === 0)
+    return <div className="text-sm text-slate-500">スコアデータがありません（バッチ未実行）</div>;
 
   return (
-    <div style={{ marginTop: 16 }}>
-      <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9ca3af', marginBottom: 12 }}>
-        多軸分析
-      </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+    <div className="mt-4">
+      <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">多軸分析</h3>
+      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         {axes.axes.map((axis) => (
           <AxisCard key={axis.name} axis={axis} />
         ))}

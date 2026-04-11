@@ -1,4 +1,5 @@
 import type { ProfileKey } from '@/types/stockScore';
+import { cn } from '@/lib/cn';
 
 interface Props {
   value: ProfileKey | 'none';
@@ -6,35 +7,28 @@ interface Props {
   showAuto?: boolean;
 }
 
-const TABS: { key: ProfileKey | 'none'; label: string; color: string }[] = [
-  { key: 'none', label: '総合', color: '#a78bfa' },
-  { key: 'growth', label: '成長型', color: '#10b981' },
-  { key: 'balanced', label: 'バランス型', color: '#3b82f6' },
-  { key: 'income', label: 'インカム型', color: '#f59e0b' },
-  { key: 'auto', label: '自動 (フェーズ)', color: '#ec4899' },
+const TABS: { key: ProfileKey | 'none'; label: string; activeClass: string }[] = [
+  { key: 'none', label: '総合', activeClass: 'bg-violet-500 text-white' },
+  { key: 'growth', label: '成長型', activeClass: 'bg-emerald-500 text-white' },
+  { key: 'balanced', label: 'バランス型', activeClass: 'bg-blue-500 text-white' },
+  { key: 'income', label: 'インカム型', activeClass: 'bg-amber-500 text-white' },
+  { key: 'auto', label: '自動 (フェーズ)', activeClass: 'bg-pink-500 text-white' },
 ];
 
 const ProfileSelector = ({ value, onChange, showAuto = true }: Props) => {
   const tabs = showAuto ? TABS : TABS.filter((t) => t.key !== 'auto');
   return (
-    <div style={{ display: 'flex', gap: 4, background: '#1f2937', padding: 4, borderRadius: 8 }}>
+    <div className="inline-flex gap-1 rounded-lg bg-slate-100 p-1">
       {tabs.map((t) => {
         const active = value === t.key;
         return (
           <button
             key={t.key}
             onClick={() => onChange(t.key)}
-            style={{
-              padding: '6px 14px',
-              fontSize: 12,
-              fontWeight: 600,
-              background: active ? t.color : 'transparent',
-              color: active ? '#0f172a' : '#9ca3af',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
+            className={cn(
+              'cursor-pointer rounded-md border-none px-3.5 py-1.5 text-xs font-semibold transition-colors',
+              active ? t.activeClass : 'bg-transparent text-slate-500 hover:text-slate-900'
+            )}
           >
             {t.label}
           </button>

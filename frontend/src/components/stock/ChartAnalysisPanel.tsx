@@ -10,10 +10,10 @@ const trendLabel: Record<string, string> = {
   neutral: '中立 (Neutral)',
 };
 
-const trendColor: Record<string, string> = {
-  bullish: '#4caf50',
-  bearish: '#f44336',
-  neutral: '#ff9800',
+const trendClass: Record<string, string> = {
+  bullish: 'text-emerald-600',
+  bearish: 'text-rose-600',
+  neutral: 'text-amber-600',
 };
 
 const recommendationLabel: Record<string, string> = {
@@ -22,76 +22,35 @@ const recommendationLabel: Record<string, string> = {
   hold: '様子見 (Hold)',
 };
 
-const recommendationColor: Record<string, string> = {
-  buy: '#4caf50',
-  sell: '#f44336',
-  hold: '#ff9800',
+const recommendationClass: Record<string, string> = {
+  buy: 'text-emerald-600',
+  sell: 'text-rose-600',
+  hold: 'text-amber-600',
 };
 
 const ChartAnalysisPanel = ({ analysis }: ChartAnalysisPanelProps) => {
   const formattedDate = new Date(analysis.created_at).toLocaleString('ja-JP');
 
   return (
-    <div
-      style={{
-        border: '1px solid #e0e0e0',
-        borderRadius: '8px',
-        padding: '1.5rem',
-        marginTop: '1rem',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}
-      >
-        <h3 style={{ margin: 0 }}>AI チャート分析</h3>
-        <span style={{ fontSize: '0.85rem', color: '#757575' }}>
-          最終更新: {formattedDate}
-        </span>
+    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="m-0 text-base font-semibold text-slate-900">AI チャート分析</h3>
+        <span className="text-xs text-slate-500">最終更新: {formattedDate}</span>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '1rem',
-          marginBottom: '1rem',
-        }}
-      >
-        <div
-          style={{
-            padding: '1rem',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px',
-          }}
-        >
-          <div style={{ fontSize: '0.85rem', color: '#757575' }}>トレンド</div>
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <div className="rounded bg-slate-100 p-4">
+          <div className="text-xs text-slate-500">トレンド</div>
           <div
-            style={{
-              fontWeight: 'bold',
-              color: trendColor[analysis.trend] ?? '#757575',
-            }}
+            className={`font-bold ${trendClass[analysis.trend] ?? 'text-slate-500'}`}
           >
             {trendLabel[analysis.trend] ?? analysis.trend}
           </div>
         </div>
-        <div
-          style={{
-            padding: '1rem',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px',
-          }}
-        >
-          <div style={{ fontSize: '0.85rem', color: '#757575' }}>推奨</div>
+        <div className="rounded bg-slate-100 p-4">
+          <div className="text-xs text-slate-500">推奨</div>
           <div
-            style={{
-              fontWeight: 'bold',
-              color: recommendationColor[analysis.recommendation] ?? '#757575',
-            }}
+            className={`font-bold ${recommendationClass[analysis.recommendation] ?? 'text-slate-500'}`}
           >
             {recommendationLabel[analysis.recommendation] ?? analysis.recommendation}
           </div>
@@ -99,13 +58,13 @@ const ChartAnalysisPanel = ({ analysis }: ChartAnalysisPanelProps) => {
       </div>
 
       {analysis.signals && Object.keys(analysis.signals).length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <h4 style={{ marginTop: 0, marginBottom: '0.5rem' }}>シグナル</h4>
-          <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+        <div className="mb-4">
+          <h4 className="mb-2 mt-0 text-sm font-semibold text-slate-900">シグナル</h4>
+          <ul className="m-0 list-disc pl-6 text-sm text-slate-700">
             {Object.entries(analysis.signals).map(([key, value]) =>
               value ? (
-                <li key={key} style={{ marginBottom: '0.25rem' }}>
-                  <strong>{key.toUpperCase()}:</strong> {value}
+                <li key={key} className="mb-1">
+                  <strong className="text-slate-900">{key.toUpperCase()}:</strong> {value}
                 </li>
               ) : null
             )}
@@ -114,10 +73,8 @@ const ChartAnalysisPanel = ({ analysis }: ChartAnalysisPanelProps) => {
       )}
 
       <div>
-        <h4 style={{ marginTop: 0, marginBottom: '0.5rem' }}>サマリー</h4>
-        <p style={{ margin: 0, lineHeight: 1.6, color: '#333' }}>
-          {analysis.summary}
-        </p>
+        <h4 className="mb-2 mt-0 text-sm font-semibold text-slate-900">サマリー</h4>
+        <p className="m-0 leading-relaxed text-slate-700">{analysis.summary}</p>
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
  * Period selector component
  */
 
+import { cn } from '@/lib/cn';
+
 interface PeriodSelectorProps {
   currentPeriod: string;
   onPeriodChange: (period: string) => void;
@@ -18,25 +20,25 @@ const periods = [
 
 const PeriodSelector = ({ currentPeriod, onPeriodChange }: PeriodSelectorProps) => {
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <label style={{ marginRight: '0.5rem' }}>期間:</label>
-      {periods.map((period) => (
-        <button
-          key={period.value}
-          onClick={() => onPeriodChange(period.value)}
-          style={{
-            margin: '0 0.25rem',
-            padding: '0.5rem 1rem',
-            backgroundColor: currentPeriod === period.value ? '#007bff' : '#f0f0f0',
-            color: currentPeriod === period.value ? 'white' : '#333',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          {period.label}
-        </button>
-      ))}
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      <label className="text-sm text-slate-500">期間:</label>
+      {periods.map((period) => {
+        const active = currentPeriod === period.value;
+        return (
+          <button
+            key={period.value}
+            onClick={() => onPeriodChange(period.value)}
+            className={cn(
+              'cursor-pointer rounded border px-3 py-1 text-sm',
+              active
+                ? 'border-brand-600 bg-brand-600 text-white'
+                : 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100'
+            )}
+          >
+            {period.label}
+          </button>
+        );
+      })}
     </div>
   );
 };
