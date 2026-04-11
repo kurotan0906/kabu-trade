@@ -96,3 +96,6 @@ Thumbs.db
 # Local SSH keys (never commit)
 ss500725
 ss500725.pub
+
+# Superpowers brainstorm session cache (temporary, regenerable)
+.superpowers/
