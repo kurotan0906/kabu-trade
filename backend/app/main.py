@@ -132,6 +132,10 @@ app.include_router(tradingview_signals.router, prefix="/api/v1/tradingview-signa
 from app.api.v1 import portfolio
 app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["portfolio"])
 
+# 将来価値シミュレータ API
+from app.api.v1 import advisor
+app.include_router(advisor.router, prefix="/api/v1/advisor", tags=["advisor"])
+
 # 将来の拡張用
 # from app.api.v1 import strategies
 # app.include_router(strategies.router, prefix="/api/v1/strategies", tags=["strategies"])
