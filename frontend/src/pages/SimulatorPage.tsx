@@ -1,21 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { advisorApi } from '@/services/api/advisorApi';
 import FutureValueChart from '@/components/advisor/FutureValueChart';
 import type { SimulateResponse } from '@/types/advisor';
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardBody,
+  Stat,
+  Button,
+  Field,
+  NumberInput,
+} from '@/components/ui';
 
 const formatYen = (v: number) => `¥${Math.round(v).toLocaleString()}`;
 
 const SimulatorPage = () => {
-  const [pv, setPv] = useState(1_000_000);
-  const [monthly, setMonthly] = useState(50_000);
-  const [rate, setRate] = useState(5.0);
-  const [years, setYears] = useState(20);
+  const [params] = useSearchParams();
+  const [pv, setPv] = useState(Number(params.get('pv') ?? 1_000_000));
+  const [monthly, setMonthly] = useState(Number(params.get('monthly') ?? 50_000));
+  const [rate, setRate] = useState(Number(params.get('rate') ?? 5.0));
+  const [years, setYears] = useState(Number(params.get('years') ?? 20));
   const [result, setResult] = useState<SimulateResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 必要年利計算
   const [goal, setGoal] = useState(20_000_000);
-  const [requiredRate, setRequiredRate] = useState<number | null>(null);
   const [requiredMsg, setRequiredMsg] = useState<string>('');
 
   const handleSimulate = async () => {
@@ -33,6 +44,14 @@ const SimulatorPage = () => {
     }
   };
 
+  useEffect(() => {
+    // URL クエリで値が渡されたら初回自動実行
+    if (params.get('monthly') || params.get('rate')) {
+      void handleSimulate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleRequiredRate = async () => {
     const res = await advisorApi.requiredRate({
       goal,
@@ -40,140 +59,86 @@ const SimulatorPage = () => {
       n_months: years * 12,
       monthly_investment: monthly,
     });
-    setRequiredRate(res.annual_rate_percent);
     setRequiredMsg(
       res.annual_rate_percent == null
-        ? '計算不能（pv または期間が不正です）'
+        ? '計算不能'
         : res.annual_rate_percent > 200
-          ? '実質到達不可能な目標です'
+          ? '実質到達不可能'
           : `必要年利: ${res.annual_rate_percent}%`
     );
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto', color: '#e5e7eb' }}>
-      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>将来価値シミュレータ</h1>
+    <>
+      <PageHeader
+        title="将来価値シミュレータ"
+        description="積立と想定年利から将来評価額を試算"
+      />
 
-      {/* 入力 */}
-      <div style={{ padding: 16, background: '#1f2937', borderRadius: 10, marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          <Field label="現在評価額 (円)" value={pv} onChange={setPv} />
-          <Field label="毎月積立 (円)" value={monthly} onChange={setMonthly} />
-          <Field label="想定年利 (%)" value={rate} onChange={setRate} step={0.1} />
-          <Field label="期間 (年)" value={years} onChange={setYears} />
-        </div>
-        <button
-          onClick={handleSimulate}
-          disabled={loading}
-          style={{
-            marginTop: 12,
-            padding: '8px 20px',
-            background: '#7c3aed',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {loading ? '計算中...' : '▶ シミュレーション実行'}
-        </button>
-      </div>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>入力</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="現在評価額 (円)">
+              <NumberInput value={pv} onChange={setPv} step={10_000} />
+            </Field>
+            <Field label="毎月積立 (円)">
+              <NumberInput value={monthly} onChange={setMonthly} step={1000} />
+            </Field>
+            <Field label="想定年利 (%)">
+              <NumberInput value={rate} onChange={setRate} step={0.1} />
+            </Field>
+            <Field label="期間 (年)">
+              <NumberInput value={years} onChange={setYears} />
+            </Field>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button variant="accent" onClick={handleSimulate} disabled={loading}>
+              {loading ? '計算中...' : '▶ 実行'}
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
 
       {result && (
         <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
-            <Summary label="最終評価額" value={formatYen(result.final_value)} color="#a78bfa" />
-            <Summary label="拠出累計" value={formatYen(result.total_contributed)} color="#60a5fa" />
-            <Summary
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-6">
+            <Stat label="最終評価額" value={formatYen(result.final_value)} accent="brand" />
+            <Stat label="拠出累計" value={formatYen(result.total_contributed)} />
+            <Stat
               label="運用益"
               value={formatYen(result.total_gain)}
-              color={result.total_gain >= 0 ? '#10b981' : '#ef4444'}
+              accent={result.total_gain >= 0 ? 'success' : 'danger'}
             />
           </div>
-          <FutureValueChart data={result.timeseries} />
+          <Card className="mb-6">
+            <CardBody>
+              <FutureValueChart data={result.timeseries} />
+            </CardBody>
+          </Card>
         </>
       )}
 
-      {/* 必要年利計算 */}
-      <div style={{ marginTop: 24, padding: 16, background: '#1f2937', borderRadius: 10 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>必要年利逆算</div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Field label="目標額 (円)" value={goal} onChange={setGoal} />
-          <button
-            onClick={handleRequiredRate}
-            style={{
-              padding: '8px 16px',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: 12,
-            }}
-          >
-            計算
-          </button>
-          {requiredMsg && (
-            <span
-              style={{
-                fontSize: 13,
-                color: requiredRate != null && requiredRate <= 10 ? '#10b981' : '#f59e0b',
-              }}
-            >
-              {requiredMsg}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>必要年利逆算</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="flex flex-wrap items-end gap-3">
+            <Field label="目標額 (円)">
+              <NumberInput value={goal} onChange={setGoal} step={100_000} />
+            </Field>
+            <Button variant="secondary" onClick={handleRequiredRate}>
+              計算
+            </Button>
+            {requiredMsg && <span className="text-sm text-slate-700">{requiredMsg}</span>}
+          </div>
+        </CardBody>
+      </Card>
+    </>
   );
 };
-
-const Field = ({
-  label,
-  value,
-  onChange,
-  step = 1,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  step?: number;
-}) => (
-  <label style={{ display: 'flex', flexDirection: 'column', fontSize: 11, color: '#9ca3af' }}>
-    {label}
-    <input
-      type="number"
-      value={value}
-      step={step}
-      onChange={(e) => onChange(Number(e.target.value))}
-      style={{
-        marginTop: 4,
-        padding: '6px 10px',
-        background: '#374151',
-        color: '#e5e7eb',
-        border: '1px solid #4b5563',
-        borderRadius: 6,
-        fontSize: 13,
-      }}
-    />
-  </label>
-);
-
-const Summary = ({ label, value, color }: { label: string; value: string; color: string }) => (
-  <div style={{ padding: 14, background: '#0f172a', borderRadius: 8 }}>
-    <div style={{ fontSize: 11, color: '#6b7280' }}>{label}</div>
-    <div style={{ fontSize: 20, fontWeight: 700, color, marginTop: 4 }}>{value}</div>
-  </div>
-);
 
 export default SimulatorPage;

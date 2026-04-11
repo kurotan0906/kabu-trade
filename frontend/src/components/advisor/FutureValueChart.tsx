@@ -35,64 +35,74 @@ const FutureValueChart = ({ data, width = 720, height = 320 }: Props) => {
   const tickValues = Array.from({ length: yTicks + 1 }, (_, i) => (maxY / yTicks) * i);
 
   return (
-    <svg width={width} height={height} style={{ background: '#0f172a', borderRadius: 8 }}>
-      {/* Y grid */}
-      {tickValues.map((v) => (
-        <g key={v}>
-          <line
-            x1={pad.l}
-            x2={width - pad.r}
-            y1={yScale(v)}
-            y2={yScale(v)}
-            stroke="#1f2937"
-            strokeDasharray="2 4"
-          />
-          <text x={pad.l - 6} y={yScale(v) + 4} fill="#6b7280" fontSize="10" textAnchor="end">
-            {fmtY(v)}
-          </text>
-        </g>
-      ))}
-
-      {/* X labels */}
-      {data
-        .filter((_, i) => i % Math.max(1, Math.floor(data.length / 8)) === 0)
-        .map((d) => (
-          <text
-            key={d.year}
-            x={xScale(d.year)}
-            y={height - pad.b + 16}
-            fill="#6b7280"
-            fontSize="10"
-            textAnchor="middle"
-          >
-            {d.year}年
-          </text>
+    <div className="w-full">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-auto"
+        style={{ background: '#ffffff', borderRadius: 8 }}
+      >
+        {/* Y grid */}
+        {tickValues.map((v) => (
+          <g key={v}>
+            <line
+              x1={pad.l}
+              x2={width - pad.r}
+              y1={yScale(v)}
+              y2={yScale(v)}
+              stroke="#e2e8f0"
+              strokeDasharray="2 4"
+            />
+            <text x={pad.l - 6} y={yScale(v) + 4} fill="#64748b" fontSize="10" textAnchor="end">
+              {fmtY(v)}
+            </text>
+          </g>
         ))}
 
-      {/* 拠出累計（青） */}
-      <path d={linePath('contributed')} fill="none" stroke="#60a5fa" strokeWidth="2" />
+        {/* X labels */}
+        {data
+          .filter((_, i) => i % Math.max(1, Math.floor(data.length / 8)) === 0)
+          .map((d) => (
+            <text
+              key={d.year}
+              x={xScale(d.year)}
+              y={height - pad.b + 16}
+              fill="#64748b"
+              fontSize="10"
+              textAnchor="middle"
+            >
+              {d.year}年
+            </text>
+          ))}
 
-      {/* 評価額（紫グラデ） */}
-      <defs>
-        <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path
-        d={`${linePath('value')} L ${xScale(maxX)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`}
-        fill="url(#grad)"
-      />
-      <path d={linePath('value')} fill="none" stroke="#a78bfa" strokeWidth="2.5" />
+        {/* 拠出累計（青） */}
+        <path d={linePath('contributed')} fill="none" stroke="#60a5fa" strokeWidth="2" />
 
-      {/* 凡例 */}
-      <g transform={`translate(${pad.l + 10}, ${pad.t + 10})`}>
-        <rect width="14" height="2" y="5" fill="#a78bfa" />
-        <text x="20" y="9" fill="#e5e7eb" fontSize="11">評価額</text>
-        <rect width="14" height="2" y="20" x="80" fill="#60a5fa" />
-        <text x="100" y="24" fill="#e5e7eb" fontSize="11">拠出累計</text>
-      </g>
-    </svg>
+        {/* 評価額（紫グラデ） */}
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path
+          d={`${linePath('value')} L ${xScale(maxX)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`}
+          fill="url(#grad)"
+        />
+        <path d={linePath('value')} fill="none" stroke="#a78bfa" strokeWidth="2.5" />
+
+        {/* 凡例 */}
+        <g transform={`translate(${pad.l + 10}, ${pad.t + 10})`}>
+          <rect width="14" height="2" y="5" fill="#a78bfa" />
+          <text x="20" y="9" fill="#475569" fontSize="11">
+            評価額
+          </text>
+          <rect width="14" height="2" y="20" x="80" fill="#60a5fa" />
+          <text x="100" y="24" fill="#475569" fontSize="11">
+            拠出累計
+          </text>
+        </g>
+      </svg>
+    </div>
   );
 };
 
