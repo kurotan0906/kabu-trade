@@ -5,6 +5,7 @@ import StockRankingPage from './pages/StockRankingPage'
 import PortfolioPage from './pages/PortfolioPage'
 import SimulatorPage from './pages/SimulatorPage'
 import AnalysisHistoryPage from './pages/AnalysisHistoryPage'
+import UiSandboxPage from './pages/__UiSandboxPage'
 import './App.css'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/simulator" element={<SimulatorPage />} />
         <Route path="/history" element={<AnalysisHistoryPage />} />
+        <Route path="/__ui" element={<UiSandboxPage />} />
       </Routes>
     </BrowserRouter>
   )
