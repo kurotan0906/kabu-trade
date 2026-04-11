@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scoresApi } from '@/services/api/scoresApi';
-import type { StockScore, BatchStatus } from '@/types/stockScore';
+import type { StockScore, BatchStatus, ProfileKey } from '@/types/stockScore';
 import { tradingviewApi } from '@/services/api/tradingviewApi';
 import type { TradingViewSignal } from '@/types/tradingviewSignal';
+import ProfileSelector from '@/components/stock/ProfileSelector';
 
 const RATING_COLORS: Record<string, string> = {
   '強い買い': '#3b82f6',
@@ -40,12 +41,15 @@ const StockRankingPage = () => {
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
   const [tvSignals, setTvSignals] = useState<Record<string, TradingViewSignal>>({});
+  const [profile, setProfile] = useState<ProfileKey | 'none'>('none');
   const navigate = useNavigate();
 
   useEffect(() => {
+    setLoading(true);
     const tvPromise = tradingviewApi.listSignals().catch(() => [] as TradingViewSignal[]);
+    const profileParam: ProfileKey | undefined = profile === 'none' ? undefined : profile;
     Promise.all([
-      scoresApi.listScores('total_score', 100),
+      scoresApi.listScores('total_score', 100, profileParam),
       scoresApi.getBatchStatus(),
       tvPromise,
     ]).then(([s, b, tv]) => {
@@ -55,7 +59,7 @@ const StockRankingPage = () => {
       tv.forEach((sig) => { map[sig.symbol] = sig; });
       setTvSignals(map);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [profile]);
 
   const handleTriggerBatch = async () => {
     setTriggering(true);
@@ -73,6 +77,9 @@ const StockRankingPage = () => {
 
   return (
     <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ marginBottom: 12 }}>
+        <ProfileSelector value={profile} onChange={setProfile} />
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700 }}>銘柄スコアランキング</h1>
@@ -126,7 +133,9 @@ const StockRankingPage = () => {
             <tr style={{ borderBottom: '1px solid #374151' }}>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>#</th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>銘柄</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#a78bfa', fontWeight: 600 }}>総合スコア ▼</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: '#a78bfa', fontWeight: 600 }}>
+                {profile === 'none' ? '総合スコア ▼' : `${scores[0]?.profile_name ?? 'プロファイル'} ▼`}
+              </th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>レーティング</th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>ファンダ</th>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>テクニカル</th>
@@ -150,7 +159,9 @@ const StockRankingPage = () => {
                     <div style={{ fontWeight: 600, color: '#a78bfa' }}>{s.symbol}</div>
                     <div style={{ fontSize: 11, color: '#6b7280' }}>{s.name}</div>
                   </td>
-                  <td style={{ padding: '10px 12px' }}><ScoreBar score={s.total_score} /></td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <ScoreBar score={profile === 'none' ? s.total_score : (s.profile_score ?? s.total_score)} />
+                  </td>
                   <td style={{ padding: '10px 12px' }}>
                     {s.rating ? (
                       <span style={{

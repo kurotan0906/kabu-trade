@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { StockScore, AnalysisAxes, BatchStatus } from '@/types/stockScore';
+import type { StockScore, AnalysisAxes, BatchStatus, ProfileKey } from '@/types/stockScore';
 
 const API_BASE_URL = '/api/v1';
 
@@ -11,8 +11,10 @@ const apiClient = axios.create({
 type SortField = 'total_score' | 'fundamental_score' | 'technical_score' | 'kurotenko_score';
 
 export const scoresApi = {
-  async listScores(sort: SortField = 'total_score', limit = 100): Promise<StockScore[]> {
-    const response = await apiClient.get<StockScore[]>('/scores', { params: { sort, limit } });
+  async listScores(sort: SortField = 'total_score', limit = 100, profile?: ProfileKey): Promise<StockScore[]> {
+    const params: Record<string, string | number> = { sort, limit };
+    if (profile) params.profile = profile;
+    const response = await apiClient.get<StockScore[]>('/scores', { params });
     return response.data;
   },
 

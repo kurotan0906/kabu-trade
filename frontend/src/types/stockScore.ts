@@ -19,7 +19,13 @@ export interface StockScore {
   rsi_score: number | null;
   macd_score: number | null;
   data_quality: 'ok' | 'fetch_error' | 'partial';
+  profile_score?: number | null;
+  profile_name?: string | null;
+  current_phase?: string | null;
+  adjusted_total_score?: number | null;
 }
+
+export type ProfileKey = 'growth' | 'balanced' | 'income' | 'auto';
 
 export interface AnalysisAxis {
   name: string;

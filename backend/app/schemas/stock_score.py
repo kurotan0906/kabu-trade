@@ -26,6 +26,11 @@ class StockScoreResponse(BaseModel):
     rsi_score: Optional[float] = None
     macd_score: Optional[float] = None
     data_quality: str = "ok"
+    # プロファイル適用時にのみ埋まる
+    profile_score: Optional[float] = None
+    profile_name: Optional[str] = None
+    current_phase: Optional[str] = None
+    adjusted_total_score: Optional[float] = None
 
     class Config:
         from_attributes = True
