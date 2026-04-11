@@ -1,7 +1,7 @@
 """Application configuration"""
 
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Literal
 
 
 class Settings(BaseSettings):
@@ -24,6 +24,13 @@ class Settings(BaseSettings):
 
     # Provider settings
     USE_MOCK_PROVIDER: bool = False  # モックプロバイダーを使用するか
+
+    # Scoring data source
+    # hybrid: yfinance の history + info を TradingView の指標で上書き（既定）
+    # tv:     TradingView のみ（history が取れないため技術スコアは低下）
+    # yfinance: yfinance のみ（従来動作）
+    SCORING_DATA_SOURCE: Literal["hybrid", "tv", "yfinance"] = "hybrid"
+    SCORING_MAX_WORKERS: int = 4
 
     # J-Quants API (PoC)
     JQUANTS_API_URL: str = "https://api.jpx-jquants.com/v1"
