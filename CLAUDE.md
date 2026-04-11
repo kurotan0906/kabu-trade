@@ -39,6 +39,13 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Keep steering current and verify alignment with `/kiro:spec-status`
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
 
+## アーキテクチャ原則
+
+- **レイヤの責務を守る（シンプルでも例外なし）**:
+  コードを書く前に「この変更が必要になったとき、どこだけ直せばいいか」を問う。
+  DBの構造変化 → Repository/Service に閉じる、HTTP仕様の変化 → API層に閉じる。
+  処理が単純に見えるほどレイヤを飛ばしやすいが、それが負債の起点になる。
+
 ## Steering Configuration
 - Load entire `.kiro/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
