@@ -437,8 +437,8 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com
 - [ ] **Step 2: gcloud CLI でプロジェクトを設定**
 
 ```bash
-gcloud config set project <PROJECT_ID>
-gcloud config set run/region asia-northeast1
+gcloud config set project project-3f47b1b7-10e1-4c8f-a8b
+gcloud config set run/region us-central1
 ```
 
 - [ ] **Step 3: Docker イメージをビルドしてデプロイ**
@@ -447,7 +447,7 @@ gcloud config set run/region asia-northeast1
 cd backend
 gcloud run deploy kabu-trade-backend \
   --source . \
-  --region asia-northeast1 \
+  --region us-central1 \
   --allow-unauthenticated \
   --memory 512Mi \
   --cpu 1 \
@@ -463,12 +463,12 @@ gcloud run deploy kabu-trade-backend \
   --set-env-vars "SCORING_YFINANCE_MIN_INTERVAL_SEC=1.0"
 ```
 
-Expected: `Service [kabu-trade-backend] revision [kabu-trade-backend-xxxxx] has been deployed and is serving 100 percent of traffic.` と URL が表示される
+Expected: `Service [kabu-trade-backend] revision [kabu-trade-backend-1061707373577] has been deployed and is serving 100 percent of traffic.` と URL が表示される
 
 - [ ] **Step 4: ヘルスチェック**
 
 ```bash
-curl https://kabu-trade-backend-xxxxx.asia-northeast1.run.app/health
+curl https://kabu-trade-backend-1061707373577.us-central1.run.app/health
 ```
 
 Expected: `{"status":"healthy"}`
@@ -476,7 +476,7 @@ Expected: `{"status":"healthy"}`
 - [ ] **Step 5: API の動作確認**
 
 ```bash
-curl https://kabu-trade-backend-xxxxx.asia-northeast1.run.app/api/v1/scores/ranking
+curl https://kabu-trade-backend-1061707373577.us-central1.run.app/api/v1/scores/ranking
 ```
 
 Expected: スコアデータの JSON が返る
@@ -493,7 +493,7 @@ Cloudflare Dashboard → Pages → `kabu-trade` → Settings → Environment var
 
 | 変数名 | 新しい値 |
 |--------|---------|
-| `VITE_API_BASE_URL` | `https://kabu-trade-backend-xxxxx.asia-northeast1.run.app` |
+| `VITE_API_BASE_URL` | `https://kabu-trade-backend-1061707373577.us-central1.run.app` |
 
 （`xxxxx` は Cloud Run が割り当てた実際の URL に置き換える）
 
