@@ -10,7 +10,7 @@ def _build_engine_kwargs() -> dict:
     from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 
     db_url = settings.DATABASE_URL
-    kwargs: dict = {"echo": settings.DEBUG, "future": True}
+    kwargs: dict = {"echo": settings.DEBUG, "future": True, "pool_pre_ping": True}
 
     if "ssl=false" in db_url.lower():
         clean_url = db_url.replace("?ssl=false", "").replace("&ssl=false", "")
