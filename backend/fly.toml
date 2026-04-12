@@ -1,6 +1,5 @@
 # backend/fly.toml
-# Replace <YOUR_APP_NAME> below with your unique Fly.io app name (e.g. kabu-trade-backend-yourname)
-app = "<YOUR_APP_NAME>"
+app = "kabu-trade-backend"
 primary_region = "nrt"
 
 [build]
