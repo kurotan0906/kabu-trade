@@ -82,12 +82,15 @@ def load_jpx_symbols() -> list:
     resp = requests.get(JPX_EXCEL_URL, timeout=30)
     resp.raise_for_status()
     df = pd.read_excel(io.BytesIO(resp.content), dtype=str)
+    ALLOWED_MARKETS = {"プライム（内国株式）", "スタンダード（内国株式）", "グロース（内国株式）"}
     rows = []
     for _, row in df.iterrows():
         code = str(row.get("コード", "")).strip()
         name = str(row.get("銘柄名", "")).strip()
         market = str(row.get("市場・商品区分", "")).strip()
         if not code or code == "nan":
+            continue
+        if market not in ALLOWED_MARKETS:
             continue
         rows.append({"symbol": f"{code}.T", "name": name, "market": market})
     return rows
