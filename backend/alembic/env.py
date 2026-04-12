@@ -70,6 +70,18 @@ async def run_migrations_online() -> None:
     if "ssl=false" in raw_url.lower():
         raw_url = raw_url.replace("?ssl=false", "").replace("&ssl=false", "")
         connect_args["ssl"] = False
+    else:
+        # asyncpg does not accept sslmode=/channel_binding= in the URL.
+        # Strip them and enable SSL via connect_args when sslmode=require is present.
+        from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+        parsed = urlparse(raw_url)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        sslmode = params.pop("sslmode", [None])[0]
+        params.pop("channel_binding", None)
+        clean_query = urlencode({k: v[0] for k, v in params.items()})
+        raw_url = urlunparse(parsed._replace(query=clean_query))
+        if sslmode == "require":
+            connect_args["ssl"] = True
 
     configuration["sqlalchemy.url"] = raw_url
     connectable = async_engine_from_config(
