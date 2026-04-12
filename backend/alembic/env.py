@@ -34,10 +34,8 @@ load_dotenv()
 # Get DATABASE_URL from environment, fallback to config file
 database_url = os.getenv("DATABASE_URL")
 if database_url:
-    # Keep +asyncpg for async engine
     config.set_main_option("sqlalchemy.url", database_url)
 else:
-    # Fallback to config file value
     config.set_main_option("sqlalchemy.url", config.get_main_option("sqlalchemy.url"))
 
 
@@ -68,7 +66,6 @@ async def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
     raw_url = config.get_main_option("sqlalchemy.url")
 
-    # ?ssl=false を connect_args に変換（asyncpg は URL パラメータを正しく解釈しないため）
     connect_args = {}
     if "ssl=false" in raw_url.lower():
         raw_url = raw_url.replace("?ssl=false", "").replace("&ssl=false", "")
