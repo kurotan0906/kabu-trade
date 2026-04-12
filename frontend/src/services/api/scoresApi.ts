@@ -1,12 +1,5 @@
-import axios from 'axios';
+import { apiClient } from '@/lib/apiClient';
 import type { StockScore, AnalysisAxes, BatchStatus, ProfileKey } from '@/types/stockScore';
-
-const API_BASE_URL = '/api/v1';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
 
 type SortField = 'total_score' | 'fundamental_score' | 'technical_score' | 'kurotenko_score';
 

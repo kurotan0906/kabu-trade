@@ -2,17 +2,8 @@
  * Evaluation API client
  */
 
-import axios from 'axios';
+import { apiClient } from '@/lib/apiClient';
 import type { EvaluationResult } from '@/types/evaluation';
-
-const API_BASE_URL = '/api/v1';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const evaluationApi = {
   /**

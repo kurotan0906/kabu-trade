@@ -1,15 +1,10 @@
-import axios from 'axios';
+import { apiClient } from '@/lib/apiClient';
 import type {
   SimulateRequest,
   SimulateResponse,
   RequiredRateResponse,
   HistoryEntry,
 } from '@/types/advisor';
-
-const apiClient = axios.create({
-  baseURL: '/api/v1',
-  headers: { 'Content-Type': 'application/json' },
-});
 
 export const advisorApi = {
   async simulate(req: SimulateRequest): Promise<SimulateResponse> {

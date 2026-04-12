@@ -1,14 +1,5 @@
-import axios from 'axios';
+import { apiClient } from '@/lib/apiClient';
 import type { ChartAnalysis, ChartAnalysisCreate } from '@/types/chartAnalysis';
-
-const API_BASE_URL = '/api/v1';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const chartAnalysisApi = {
   async saveAnalysis(data: ChartAnalysisCreate): Promise<ChartAnalysis> {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from '@/lib/apiClient';
 import type {
   Holding,
   HoldingCreate,
@@ -6,11 +6,6 @@ import type {
   PortfolioSettings,
   PortfolioSummary,
 } from '@/types/portfolio';
-
-const apiClient = axios.create({
-  baseURL: '/api/v1',
-  headers: { 'Content-Type': 'application/json' },
-});
 
 export const portfolioApi = {
   async listHoldings(): Promise<Holding[]> {

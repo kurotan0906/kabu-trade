@@ -2,17 +2,8 @@
  * Stock API client
  */
 
-import axios from 'axios';
+import { apiClient } from '@/lib/apiClient';
 import type { StockInfo, StockPriceResponse } from '@/types/stock';
-
-const API_BASE_URL = '/api/v1';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const stockApi = {
   /**
