@@ -7,6 +7,8 @@ from app.core.config import settings
 
 def _build_engine_kwargs() -> dict:
     """接続 URL を解析し、SSL の有無に応じたエンジン引数を返す"""
+    from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+
     db_url = settings.DATABASE_URL
     kwargs: dict = {"echo": settings.DEBUG, "future": True}
 
@@ -15,7 +17,15 @@ def _build_engine_kwargs() -> dict:
         kwargs["url"] = clean_url
         kwargs["connect_args"] = {"ssl": False}
     else:
-        kwargs["url"] = db_url
+        # asyncpg は sslmode=/channel_binding= を URL パラメータとして受け付けない
+        parsed = urlparse(db_url)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        sslmode = params.pop("sslmode", [None])[0]
+        params.pop("channel_binding", None)
+        clean_query = urlencode({k: v[0] for k, v in params.items()})
+        kwargs["url"] = urlunparse(parsed._replace(query=clean_query))
+        if sslmode == "require":
+            kwargs["connect_args"] = {"ssl": True}
 
     return kwargs
 
