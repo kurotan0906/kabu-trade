@@ -31,6 +31,9 @@ ENV PATH=/root/.local/bin:$PATH
 # アプリケーションコードのコピー
 COPY . .
 
+# エントリーポイントスクリプトに実行権限を付与
+RUN chmod +x docker-entrypoint.sh
+
 # ポート公開
 EXPOSE 8000
 
@@ -38,5 +41,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# アプリケーション起動（本番モード）
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 起動時にマイグレーションを実行してからアプリを起動
+CMD ["./docker-entrypoint.sh"]
