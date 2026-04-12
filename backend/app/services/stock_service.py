@@ -108,6 +108,30 @@ class StockService:
 
             return stock_info
 
+        # stock_scores テーブルからフォールバック
+        try:
+            from sqlalchemy import select
+            from app.models.stock_score import StockScore
+            symbol = f"{code}.T" if not code.endswith(".T") else code
+            result = await self.db.execute(
+                select(StockScore).where(StockScore.symbol == symbol).order_by(StockScore.scored_at.desc()).limit(1)
+            )
+            score = result.scalar_one_or_none()
+            if score:
+                stock_info = StockInfo(
+                    code=code,
+                    name=score.name or code,
+                    sector=score.sector,
+                    market_cap=None,
+                    current_price=None,
+                    per=score.per,
+                    pbr=score.pbr,
+                )
+                await self._set_cache(cache_key, stock_info.dict(), ttl=3600)
+                return stock_info
+        except Exception:
+            pass
+
         # 外部APIから取得
         stock_info = await self.provider.get_stock_info(code)
 
@@ -115,7 +139,6 @@ class StockService:
         try:
             await self.repository.create_or_update(stock_info)
         except Exception:
-            # データベース接続エラーの場合はスキップ
             pass
 
         # キャッシュに保存（1時間）
