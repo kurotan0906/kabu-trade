@@ -259,6 +259,8 @@ def run_batch_scoring_sync(redis_client) -> dict:
                 if result is not None:
                     session.add(StockScore(**result))
                     processed += 1
+                    # 成功した銘柄だけ checkpoint に記録（失敗は次回実行でリトライされる）
+                    checkpoint_buffer.append(sym)
                 else:
                     session.add(StockScore(
                         symbol=sym,
@@ -266,8 +268,6 @@ def run_batch_scoring_sync(redis_client) -> dict:
                         data_quality="fetch_error",
                     ))
                     failed += 1
-
-                checkpoint_buffer.append(sym)
                 done = processed + failed
                 if done == 1:
                     logger.info("最初の1件完了: %s (成功=%s)", sym, result is not None)
