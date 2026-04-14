@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.core.redis_client import get_redis
 from app.services.scoring_service import (
     CHECKPOINT_REDIS_KEY,
+    KUROTENKO_CACHE_KEY_FMT,
     run_batch_scoring_sync,
     get_batch_status,
 )
@@ -122,10 +123,30 @@ async def get_scoring_status():
 
 @router.post("/scoring/reset", status_code=200)
 async def reset_batch_status():
-    """バッチスコアリングのステータスとチェックポイントをリセットする"""
+    """バッチスコアリングのステータス、チェックポイント、および
+    kurotenko 評価キャッシュをリセットする。
+
+    kurotenko キャッシュを残したままリセットすると
+    「本当にやり直したい」場合に財務データが古いまま使われてしまうため、
+    reset ではキャッシュも SCAN で一括削除する。
+    """
     global _running
     redis = await get_redis()
     await redis.delete("batch:scoring:status")
     await redis.delete(CHECKPOINT_REDIS_KEY)
+
+    # kurotenko:v1:* を SCAN で列挙して一括削除
+    pattern = KUROTENKO_CACHE_KEY_FMT.format(symbol="*")
+    deleted = 0
+    try:
+        async for key in redis.scan_iter(match=pattern, count=500):
+            await redis.delete(key)
+            deleted += 1
+    except Exception as e:
+        logger.warning("kurotenko キャッシュ削除失敗: %s", e)
+
     _running = False
-    return {"message": "バッチステータスとチェックポイントをリセットしました"}
+    return {
+        "message": "バッチステータス、チェックポイント、kurotenko キャッシュをリセットしました",
+        "kurotenko_cache_deleted": deleted,
+    }
