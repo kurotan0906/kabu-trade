@@ -8,21 +8,6 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.exceptions import KabuTradeException
 from app.core.redis_client import get_redis, close_redis
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-import pytz
-
-_scheduler = BackgroundScheduler(timezone=pytz.timezone("Asia/Tokyo"))
-
-
-def _scheduled_batch():
-    """APScheduler から呼ばれるバッチ実行（同期）"""
-    import redis as sync_redis_lib
-    from app.core.config import settings
-    from app.services.scoring_service import run_batch_scoring_sync
-    sync_redis = sync_redis_lib.from_url(settings.REDIS_URL, decode_responses=True)
-    run_batch_scoring_sync(sync_redis)
-
 
 # ロギング設定
 setup_logging()
@@ -30,20 +15,19 @@ setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """アプリケーションのライフサイクル管理"""
-    # 起動時
+    """アプリケーションのライフサイクル管理。
+
+    バッチスコアリングは Cloud Run Jobs で実行するため、
+    Service 側に APScheduler 等のスケジューラは持たない。
+    定期実行は Cloud Scheduler → Cloud Run Jobs で行う。
+    """
     try:
-        await get_redis()  # Redis接続を初期化
+        await get_redis()
     except Exception as e:
-        # Redis接続エラーを無視（データベースなしモード）
         print(f"⚠ Redis接続エラー（無視）: {e}")
-    _scheduler.add_job(_scheduled_batch, CronTrigger(hour=18, minute=0))
-    _scheduler.start()
     yield
-    # 終了時
-    _scheduler.shutdown(wait=False)
     try:
-        await close_redis()  # Redis接続を閉じる
+        await close_redis()
     except Exception:
         pass
 

@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # バッチ時の yfinance 呼び出し間隔（秒）。>0 でスレッド間ロック付きスロットル（429 対策）
     SCORING_YFINANCE_MIN_INTERVAL_SEC: float = 0.0
 
+    # Cloud Run Jobs 連携（バッチスコアリングを別ジョブで実行）
+    # 未設定時は従来通り同プロセスで実行する（ローカル開発用）
+    GCP_PROJECT_ID: str = ""
+    GCP_REGION: str = "us-central1"
+    CLOUD_RUN_BATCH_JOB_NAME: str = "kabu-trade-batch"
+
     # J-Quants API (PoC)
     JQUANTS_API_URL: str = "https://api.jpx-jquants.com/v1"
     JQUANTS_ID_TOKEN: str = ""
