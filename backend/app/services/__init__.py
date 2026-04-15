@@ -15,7 +15,6 @@ __all__ = [
     "build_candidate_evaluation",
     "PocRunResult",
     "PocErrorCategory",
-    "run_kabu_station_poc",
     "run_jquants_poc",
 ]
 
@@ -24,7 +23,6 @@ _LAZY: dict[str, tuple[str, str]] = {
     "build_candidate_evaluation": ("app.services.api_selection_service", "build_candidate_evaluation"),
     "PocRunResult": ("app.services.api_selection_poc", "PocRunResult"),
     "PocErrorCategory": ("app.services.api_selection_poc", "PocErrorCategory"),
-    "run_kabu_station_poc": ("app.services.api_selection_poc", "run_kabu_station_poc"),
     "run_jquants_poc": ("app.services.api_selection_poc", "run_jquants_poc"),
 }
 

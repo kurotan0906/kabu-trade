@@ -17,14 +17,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/kabu_trade"
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # kabuステーションAPI
-    KABU_STATION_API_TOKEN: str = ""
-    KABU_STATION_PASSWORD: str = ""
-    KABU_STATION_API_URL: str = "https://localhost:18080/kabusapi"
-
-    # Provider settings
-    USE_MOCK_PROVIDER: bool = False  # モックプロバイダーを使用するか
-
     # Scoring data source
     # hybrid: yfinance の history + info を TradingView の指標で上書き（既定）
     # tv:     TradingView のみ（history が取れないため技術スコアは低下）

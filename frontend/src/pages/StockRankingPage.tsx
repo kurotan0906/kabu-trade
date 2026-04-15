@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { scoresApi } from '@/services/api/scoresApi';
+import { scoresApi, type SortField } from '@/services/api/scoresApi';
 import type { StockScore, BatchStatus, ProfileKey } from '@/types/stockScore';
 import { tradingviewApi } from '@/services/api/tradingviewApi';
 import type { TradingViewSignal } from '@/types/tradingviewSignal';
@@ -46,6 +46,7 @@ const StockRankingPage = () => {
   const [triggering, setTriggering] = useState(false);
   const [tvSignals, setTvSignals] = useState<Record<string, TradingViewSignal>>({});
   const [profile, setProfile] = useState<ProfileKey | 'none'>('none');
+  const [sort, setSort] = useState<SortField>('total_score');
   const [addTarget, setAddTarget] = useState<{ symbol: string; name: string | null } | null>(null);
   const navigate = useNavigate();
 
@@ -54,7 +55,7 @@ const StockRankingPage = () => {
     const tvPromise = tradingviewApi.listSignals().catch(() => [] as TradingViewSignal[]);
     const profileParam: ProfileKey | undefined = profile === 'none' ? undefined : profile;
     Promise.all([
-      scoresApi.listScores('total_score', 100, profileParam),
+      scoresApi.listScores(sort, 100, profileParam),
       scoresApi.getBatchStatus(),
       tvPromise,
     ])
@@ -68,7 +69,7 @@ const StockRankingPage = () => {
         setTvSignals(map);
       })
       .finally(() => setLoading(false));
-  }, [profile]);
+  }, [profile, sort]);
 
   const handleTriggerBatch = async () => {
     setTriggering(true);
@@ -123,6 +124,19 @@ const StockRankingPage = () => {
 
       <Toolbar>
         <ProfileSelector value={profile} onChange={setProfile} />
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          <span>並び替え:</span>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortField)}
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+          >
+            <option value="total_score">総合スコア</option>
+            <option value="kurotenko_score">黒転株（黒点子）</option>
+            <option value="fundamental_score">ファンダメンタル</option>
+            <option value="technical_score">テクニカル</option>
+          </select>
+        </label>
       </Toolbar>
 
       {loading ? (

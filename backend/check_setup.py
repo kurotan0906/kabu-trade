@@ -25,8 +25,6 @@ def check_files():
         "app/models/stock_price.py",
         "app/schemas/stock.py",
         "app/external/providers/base.py",
-        "app/external/providers/kabu_station.py",
-        "app/external/kabu_station_client.py",
         "app/repositories/stock_repository.py",
         "app/services/stock_service.py",
         "app/api/v1/stocks.py",

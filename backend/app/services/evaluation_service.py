@@ -150,7 +150,9 @@ class EvaluationService:
             )
 
     async def _save_evaluation(self, evaluation_result: EvaluationResult):
-        """評価結果をデータベースに保存"""
+        """評価結果をデータベースに保存（失敗してもAPI応答は返す）"""
+        import logging
+
         evaluation = Evaluation(
             stock_code=evaluation_result.stock_code,
             strategy_id=None,  # Phase 3で実装
@@ -167,8 +169,11 @@ class EvaluationService:
             },
         )
 
-        self.db.add(evaluation)
-        await self.db.commit()
-        await self.db.refresh(evaluation)
-
-        evaluation_result.id = evaluation.id
+        try:
+            self.db.add(evaluation)
+            await self.db.commit()
+            await self.db.refresh(evaluation)
+            evaluation_result.id = evaluation.id
+        except Exception as e:
+            await self.db.rollback()
+            logging.getLogger(__name__).warning("evaluation persistence failed: %s", e)

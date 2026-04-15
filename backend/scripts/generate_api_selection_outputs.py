@@ -121,50 +121,6 @@ def main() -> None:
         ),
     )
 
-    kabu_station = ApiCandidate(
-        provider="三菱UFJ eスマート証券",
-        name="kabuステーションAPI",
-        auth_method=AuthMethod.SESSION_TOKEN,
-        homepage_url="https://kabu.com/item/kabustation_api/default.html",
-        market_coverage=MarketCoverage(
-            scope=MarketScope.JPX_ALL,
-            supports_required_scope=True,
-            evidence=EvidenceRef(
-                source_name="kabuステーションAPIリファレンス（市場区分）",
-                url="https://kabucom.github.io/kabusapi/reference/index.html",
-                checked_at=checked_at,
-            ),
-        ),
-        pricing=PricingSummary(
-            access_tier=AccessTier.FREE,
-            summary="kabuステーション Professional プラン以上で無料利用（事前設定が必要）",
-            evidence=EvidenceRef(
-                source_name="kabuステーションAPI（利用料金/無料条件）",
-                url="https://kabu.com/item/kabustation_api/default.html",
-                checked_at=checked_at,
-            ),
-        ),
-        terms=TermsSummary(
-            redistribution_allowed=None,
-            summary="利用規約（再配布可否等）は要確認（ポータルの Terms of Service を参照）",
-            evidence=EvidenceRef(
-                source_name="kabuステーションAPIリファレンス",
-                url="https://kabucom.github.io/kabusapi/reference/index.html",
-                checked_at=checked_at,
-            ),
-        ),
-        freshness=FreshnessSummary(
-            max_delay_days=0,
-            recent_data_gap_days=None,
-            summary="時価情報・板情報 API あり（ローカル常駐/トークン/レート制限の制約あり）",
-            evidence=EvidenceRef(
-                source_name="kabuステーションAPIリファレンス（時価情報・板情報）",
-                url="https://kabucom.github.io/kabusapi/reference/index.html",
-                checked_at=checked_at,
-            ),
-        ),
-    )
-
     criteria_set = EvaluationCriteriaSet()
     evaluations = [
         build_candidate_evaluation(
@@ -175,12 +131,6 @@ def main() -> None:
         ),
         build_candidate_evaluation(
             candidate=rapidapi_yahoo,
-            criteria_set=criteria_set,
-            required_market_scope=MarketScope.JPX_PRIME,
-            checked_at=checked_at,
-        ),
-        build_candidate_evaluation(
-            candidate=kabu_station,
             criteria_set=criteria_set,
             required_market_scope=MarketScope.JPX_PRIME,
             checked_at=checked_at,
@@ -223,7 +173,7 @@ def main() -> None:
             title="無料/利用条件の変更",
             impact="無料利用条件やプランが変わりPoCや運用に影響",
             mitigation="一次情報を定期再確認し、代替候補を保持",
-            evidence=kabu_station.pricing.evidence,
+            evidence=rapidapi_yahoo.pricing.evidence,
         ),
         RiskItem(
             title="直近データ欠落/遅延（鮮度不足）",

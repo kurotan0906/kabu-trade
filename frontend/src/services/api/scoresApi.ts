@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/apiClient';
 import type { StockScore, AnalysisAxes, BatchStatus, ProfileKey } from '@/types/stockScore';
 
-type SortField = 'total_score' | 'fundamental_score' | 'technical_score' | 'kurotenko_score';
+export type SortField = 'total_score' | 'fundamental_score' | 'technical_score' | 'kurotenko_score';
 
 export const scoresApi = {
   async listScores(sort: SortField = 'total_score', limit = 100, profile?: ProfileKey): Promise<StockScore[]> {

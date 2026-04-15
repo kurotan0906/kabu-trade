@@ -3,6 +3,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models import investment_strategy as _investment_strategy  # noqa: F401  FK解決のため
 
 
 class Evaluation(Base):

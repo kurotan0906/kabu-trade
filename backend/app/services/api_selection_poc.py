@@ -12,13 +12,8 @@ from typing import Optional
 
 import httpx
 
-from app.core.exceptions import (
-    ExternalAPIError,
-    KabuStationAuthError,
-    KabuStationRateLimitError,
-)
+from app.core.exceptions import ExternalAPIError
 from app.external.j_quants_client import JQuantsClient
-from app.external.providers.kabu_station import KabuStationProvider
 from app.external.providers.base import StockDataProvider
 
 
@@ -41,10 +36,6 @@ class PocRunResult:
 
 
 def _classify_error(e: Exception) -> tuple[PocErrorCategory, str, Optional[str]]:
-    if isinstance(e, (KabuStationAuthError,)):
-        return PocErrorCategory.AUTH_MISSING, str(e.detail), "KABU_STATION_PASSWORD"
-    if isinstance(e, (KabuStationRateLimitError,)):
-        return PocErrorCategory.RATE_LIMIT, str(e.detail), None
     if isinstance(e, ExternalAPIError):
         # Use error_code heuristics when available
         if getattr(e, "error_code", "") in ("JQUANTS_AUTH_ERROR",):
@@ -74,12 +65,6 @@ async def run_provider_poc(provider: StockDataProvider, *, stock_code: str, chec
             message=msg,
             required_auth_hint=hint,
         )
-
-
-async def run_kabu_station_poc(*, stock_code: str, checked_at: date) -> PocRunResult:
-    """PoC for existing kabuステーション candidate."""
-    provider = KabuStationProvider()
-    return await run_provider_poc(provider, stock_code=stock_code, checked_at=checked_at)
 
 
 async def run_jquants_poc(*, checked_at: date) -> PocRunResult:

@@ -11,9 +11,27 @@ interface StockInfoProps {
 const StockInfo = ({ stock }: StockInfoProps) => {
   return (
     <div className="my-4 rounded-lg bg-slate-100 p-6">
-      <h2 className="mt-0 text-lg font-semibold text-slate-900">
-        {stock.name} ({stock.code})
-      </h2>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h2 className="mt-0 text-lg font-semibold text-slate-900">
+          {stock.name} ({stock.code})
+        </h2>
+        <a
+          href={`https://finance.yahoo.com/quote/${stock.code}.T`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-violet-600 underline hover:text-violet-800"
+        >
+          Yahoo Finance ↗
+        </a>
+        <a
+          href={`https://finance.yahoo.co.jp/quote/${stock.code}.T`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-violet-600 underline hover:text-violet-800"
+        >
+          Yahoo!ファイナンス(JP) ↗
+        </a>
+      </div>
       <div className="mt-3 grid grid-cols-2 gap-4 text-sm text-slate-700">
         {stock.current_price && (
           <div>

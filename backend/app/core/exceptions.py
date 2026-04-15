@@ -38,36 +38,6 @@ class ExternalAPIError(KabuTradeException):
         )
 
 
-class KabuStationAPIError(ExternalAPIError):
-    """kabuステーションAPI error exception"""
-
-    def __init__(self, message: str):
-        super().__init__(
-            message=message,
-            error_code="KABU_STATION_API_ERROR",
-        )
-
-
-class KabuStationAuthError(ExternalAPIError):
-    """kabuステーションAPI authentication error exception"""
-
-    def __init__(self, message: str = "kabuステーションAPI認証に失敗しました"):
-        super().__init__(
-            message=message,
-            error_code="KABU_STATION_AUTH_ERROR",
-        )
-
-
-class KabuStationRateLimitError(ExternalAPIError):
-    """kabuステーションAPI rate limit error exception"""
-
-    def __init__(self, message: str = "kabuステーションAPIのレート制限に達しました"):
-        super().__init__(
-            message=message,
-            error_code="KABU_STATION_RATE_LIMIT",
-        )
-
-
 class MarketClosedError(KabuTradeException):
     """Market closed exception"""
 

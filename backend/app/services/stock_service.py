@@ -5,10 +5,8 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.stock_repository import StockRepository
-from app.external.providers.kabu_station import KabuStationProvider
 from app.external.providers.mock_provider import MockProvider
 from app.core.redis_client import get_redis
-from app.core.config import settings
 from app.schemas.stock import StockInfo, StockPriceData
 from app.core.exceptions import StockNotFoundError
 import json
@@ -20,15 +18,7 @@ class StockService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repository = StockRepository(db)
-        # プロバイダーを選択（モックモードまたはkabuステーション）
-        if settings.USE_MOCK_PROVIDER:
-            self.provider = MockProvider()
-        else:
-            try:
-                self.provider = KabuStationProvider()
-            except Exception:
-                # kabuステーションAPIが利用できない場合はモックにフォールバック
-                self.provider = MockProvider()
+        self.provider = MockProvider()
 
     async def _get_cache(self, key: str) -> Optional[dict]:
         """キャッシュからデータを取得"""
@@ -221,10 +211,14 @@ class StockService:
 
                 return prices
 
-        # 外部APIから取得
-        prices = await self.provider.get_stock_prices(
-            code, start_date=start, end_date=end, period=period
-        )
+        # yfinance フォールバックを優先（任意の銘柄に対応）
+        prices = await self._fetch_prices_yfinance(code, start, end)
+
+        # yfinance が失敗したらプロバイダ（Mock）にフォールバック
+        if not prices:
+            prices = await self.provider.get_stock_prices(
+                code, start_date=start, end_date=end, period=period
+            )
 
         # DBに保存（データベースが利用可能な場合のみ）
         if prices:
@@ -240,6 +234,45 @@ class StockService:
                 cache_key, [p.dict() for p in prices], ttl=3600
             )
 
+        return prices
+
+    async def _fetch_prices_yfinance(
+        self, code: str, start: date, end: date
+    ) -> List[StockPriceData]:
+        """yfinance から株価履歴を取得（同期APIを別スレッドで実行）"""
+        import asyncio
+        from app.external.yfinance_client import fetch_stock_data
+
+        symbol = code if code.endswith(".T") else f"{code}.T"
+        try:
+            data = await asyncio.to_thread(fetch_stock_data, symbol)
+        except Exception:
+            return []
+        if not data or "history" not in data:
+            return []
+
+        history = data["history"]
+        if history is None or history.empty:
+            return []
+
+        prices: List[StockPriceData] = []
+        for idx, row in history.iterrows():
+            d = idx.date() if hasattr(idx, "date") else idx
+            if d < start or d > end:
+                continue
+            try:
+                prices.append(
+                    StockPriceData(
+                        date=d,
+                        open=Decimal(str(row["Open"])),
+                        high=Decimal(str(row["High"])),
+                        low=Decimal(str(row["Low"])),
+                        close=Decimal(str(row["Close"])),
+                        volume=int(row["Volume"]),
+                    )
+                )
+            except Exception:
+                continue
         return prices
 
     def _parse_period_to_days(self, period: str) -> int:
