@@ -18,10 +18,11 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Scoring data source
-    # hybrid: yfinance の history + info を TradingView の指標で上書き（既定）
-    # tv:     TradingView のみ（history が取れないため技術スコアは低下）
+    # hybrid:   yfinance の history + info を TradingView の指標で上書き（既定）
+    # tv:       TradingView のみ（history が取れないため技術スコアは低下）
     # yfinance: yfinance のみ（従来動作）
-    SCORING_DATA_SOURCE: Literal["hybrid", "tv", "yfinance"] = "hybrid"
+    # screener: TradingView Screener の一括取得で全銘柄の断面データを取得（Phase 1 実装、flag OFF 既定）
+    SCORING_DATA_SOURCE: Literal["hybrid", "tv", "yfinance", "screener"] = "hybrid"
     # yfinance は並列で叩くとレート制限で失敗しやすいため既定は 1（直列）
     SCORING_MAX_WORKERS: int = 1
     # バッチ時の yfinance 呼び出し間隔（秒）。>0 でスレッド間ロック付きスロットル（429 対策）

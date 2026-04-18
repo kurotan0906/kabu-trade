@@ -5,6 +5,7 @@ JPX 全銘柄を取得してスコアリングし、stock_scores テーブルに
     - "hybrid"   : yfinance の history + info を TradingView の指標で上書き（既定）
     - "tv"       : TradingView のみ（history 不要の簡易スコア）
     - "yfinance" : 従来動作
+    - "screener" : TradingView Screener 一括取得（Phase 1 flag、全銘柄を 1 API で取得）
 
 進捗は Redis の batch:scoring:status キーに JSON で保存する。
 """
@@ -200,6 +201,10 @@ def run_batch_scoring_sync(redis_client) -> dict:
     from app.external.yfinance_client import load_jpx_symbols
     from app.models.stock_score import StockScore
 
+    # Phase 1 feature flag: screener モード
+    if settings.SCORING_DATA_SOURCE == "screener":
+        return _run_batch_scoring_screener(redis_client)
+
     source = settings.SCORING_DATA_SOURCE
     max_workers = settings.SCORING_MAX_WORKERS or DEFAULT_MAX_WORKERS
 
@@ -321,3 +326,114 @@ async def get_batch_status(redis_client) -> dict:
     except Exception:
         pass
     return {"status": "idle", "total": 0, "processed": 0, "failed": 0, "started_at": None, "finished_at": None}
+
+
+def _run_batch_scoring_screener(redis_client) -> dict:
+    """TradingView Screener 一括取得モードのバッチ。
+
+    - 外部 API は screener の 1 回の snapshot fetch と、kurotenko cache miss 時の
+      yfinance 財務 API のみ。ループ内は CPU バウンド。
+    - checkpoint/retry は不要（単発 API なので中断耐性は低いが再実行で十分）。
+    """
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from app.core.config import settings
+    from app.external.yfinance_client import load_jpx_symbols
+    from app.external.tv_screener_client import fetch_japan_market_snapshot
+    from app.external.tv_screener_adapter import tv_row_to_info, tv_row_to_technical_features
+    from app.analyzer.fundamental import calc_fundamental_score
+    from app.analyzer.technical_from_tv import calc_technical_score_from_tv
+    from app.analyzer.kurotenko_screener import evaluate_candidate
+    from app.analyzer.scorer import build_stock_result
+    from app.models.stock_score import StockScore
+
+    sync_url = settings.DATABASE_URL.replace("+asyncpg", "+psycopg2")
+    engine = create_engine(sync_url)
+
+    started_at = datetime.now(timezone.utc).isoformat()
+    _set_status(redis_client, "running", total=0, processed=0, failed=0, started_at=started_at)
+
+    logger.info("screener mode: snapshot 取得開始")
+    snapshot_t0 = time.time()
+    try:
+        snapshot = fetch_japan_market_snapshot()
+    except Exception as e:
+        logger.error("TV Screener snapshot 取得失敗: %s", e)
+        _set_status(redis_client, "error", total=0, processed=0, failed=0, started_at=started_at, finished=True)
+        return {"processed": 0, "failed": 0, "total": 0, "skipped": 0}
+    logger.info(
+        "screener mode: snapshot 取得完了 銘柄数=%d 所要=%.2fs",
+        len(snapshot), time.time() - snapshot_t0,
+    )
+
+    try:
+        symbols_data = load_jpx_symbols()
+    except Exception as e:
+        logger.error("JPX銘柄マスター取得失敗: %s", e)
+        _set_status(redis_client, "error", total=0, processed=0, failed=0, started_at=started_at, finished=True)
+        return {"processed": 0, "failed": 0, "total": 0, "skipped": 0}
+
+    total = len(symbols_data)
+    processed = 0
+    failed = 0
+
+    _set_status(redis_client, "running", total=total, processed=0, failed=0, started_at=started_at)
+    logger.info("screener mode: スコアリング開始 total=%d", total)
+
+    with Session(engine) as session:
+        for idx, row in enumerate(symbols_data):
+            symbol = row["symbol"]
+            name = row.get("name")
+            market = row.get("market")
+            tv_row = snapshot.get(symbol)
+
+            if tv_row is None:
+                # TV にデータが無い（ETF・REIT・新規上場など）
+                session.add(StockScore(
+                    symbol=symbol,
+                    name=name,
+                    data_quality="missing_tv",
+                ))
+                failed += 1
+            else:
+                try:
+                    info = tv_row_to_info(tv_row)
+                    features = tv_row_to_technical_features(tv_row)
+                    fundamental = calc_fundamental_score(info)
+                    technical = calc_technical_score_from_tv(features)
+
+                    kurotenko = _get_kurotenko_cached(redis_client, symbol)
+                    if kurotenko is None:
+                        kurotenko = evaluate_candidate(symbol)
+                        _set_kurotenko_cached(redis_client, symbol, kurotenko)
+
+                    result = build_stock_result(symbol, name, market, fundamental, technical, kurotenko)
+                    session.add(StockScore(**result))
+                    processed += 1
+                except Exception as e:
+                    logger.error("%s: screener スコアリング失敗 - %s", symbol, e)
+                    session.add(StockScore(
+                        symbol=symbol,
+                        name=name,
+                        data_quality="fetch_error",
+                    ))
+                    failed += 1
+
+            done = processed + failed
+            if done % 100 == 0:
+                session.commit()
+                _set_status(
+                    redis_client, "running",
+                    total=total, processed=processed, failed=failed,
+                    started_at=started_at,
+                )
+                logger.info("進捗: %d/%d (成功=%d 失敗=%d)", done, total, processed, failed)
+        session.commit()
+
+    _set_status(
+        redis_client, "done",
+        total=total, processed=processed, failed=failed,
+        started_at=started_at, finished=True,
+    )
+    logger.info("screener mode: バッチ完了 成功=%d 失敗=%d total=%d", processed, failed, total)
+    return {"processed": processed, "failed": failed, "total": total, "skipped": 0}
