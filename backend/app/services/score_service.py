@@ -27,8 +27,9 @@ async def list_scores(
     stmt = (
         select(StockScore)
         .join(subq, (StockScore.symbol == subq.c.symbol) & (StockScore.scored_at == subq.c.latest))
-        .where(StockScore.data_quality != "fetch_error")
-        .order_by(desc(sort_col))
+        .where(StockScore.data_quality.notin_(["fetch_error", "missing_tv"]))
+        .where(sort_col.is_not(None))
+        .order_by(sort_col.desc().nulls_last())
         .limit(limit)
     )
     result = await db.execute(stmt)

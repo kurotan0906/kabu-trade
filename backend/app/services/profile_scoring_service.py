@@ -40,7 +40,8 @@ async def list_scores_with_profile(
     stmt = (
         select(StockScore)
         .join(subq, (StockScore.symbol == subq.c.symbol) & (StockScore.scored_at == subq.c.latest))
-        .where(StockScore.data_quality != "fetch_error")
+        .where(StockScore.data_quality.notin_(["fetch_error", "missing_tv"]))
+        .where(StockScore.total_score.is_not(None))
     )
     result = await db.execute(stmt)
     scores: List[StockScore] = list(result.scalars().all())

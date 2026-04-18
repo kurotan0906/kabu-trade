@@ -338,10 +338,11 @@ def _run_batch_scoring_screener(redis_client) -> dict:
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
     from app.core.config import settings
-    from app.external.yfinance_client import load_jpx_symbols
+    from app.external.yfinance_client import load_jpx_symbols, fetch_stock_data
     from app.external.tv_screener_client import fetch_japan_market_snapshot
     from app.external.tv_screener_adapter import tv_row_to_info, tv_row_to_technical_features
     from app.analyzer.fundamental import calc_fundamental_score
+    from app.analyzer.technical import calc_technical_score
     from app.analyzer.technical_from_tv import calc_technical_score_from_tv
     from app.analyzer.kurotenko_screener import evaluate_candidate
     from app.analyzer.scorer import build_stock_result
@@ -388,13 +389,34 @@ def _run_batch_scoring_screener(redis_client) -> dict:
             tv_row = snapshot.get(symbol)
 
             if tv_row is None:
-                # TV にデータが無い（ETF・REIT・新規上場など）
-                session.add(StockScore(
-                    symbol=symbol,
-                    name=name,
-                    data_quality="missing_tv",
-                ))
-                failed += 1
+                # TV Japan Scanner に無い銘柄（新規上場・マイナー市場など）は
+                # yfinance にフォールバック。バッチ全体では数銘柄のみなので遅延は軽微。
+                try:
+                    data = fetch_stock_data(symbol)
+                    if data is None or data.get("history") is None:
+                        raise RuntimeError("yfinance fallback: no data")
+                    info = data.get("info") or {}
+                    fundamental = calc_fundamental_score(info)
+                    technical = calc_technical_score(data["history"])
+
+                    kurotenko = _get_kurotenko_cached(redis_client, symbol)
+                    if kurotenko is None:
+                        kurotenko = evaluate_candidate(symbol)
+                        _set_kurotenko_cached(redis_client, symbol, kurotenko)
+
+                    result = build_stock_result(symbol, name, market, fundamental, technical, kurotenko)
+                    result["data_quality"] = "yfinance_fallback"
+                    session.add(StockScore(**result))
+                    processed += 1
+                    logger.info("%s: yfinance フォールバック成功", symbol)
+                except Exception as e:
+                    logger.warning("%s: missing_tv かつ yfinance も失敗 - %s", symbol, e)
+                    session.add(StockScore(
+                        symbol=symbol,
+                        name=name,
+                        data_quality="missing_tv",
+                    ))
+                    failed += 1
             else:
                 try:
                     info = tv_row_to_info(tv_row)
