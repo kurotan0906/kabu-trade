@@ -7,6 +7,15 @@ export const chartAnalysisApi = {
     return response.data;
   },
 
+  async generate(symbol: string, timeframe: string = '1D'): Promise<ChartAnalysis> {
+    const response = await apiClient.post<ChartAnalysis>(
+      `/chart-analysis/${symbol}/generate`,
+      null,
+      { params: { timeframe } }
+    );
+    return response.data;
+  },
+
   async getLatest(symbol: string, timeframe?: string): Promise<ChartAnalysis> {
     const params = timeframe ? { timeframe } : undefined;
     const response = await apiClient.get<ChartAnalysis>(

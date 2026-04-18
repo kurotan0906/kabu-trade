@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { portfolioApi } from '@/services/api/portfolioApi';
 import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
 import type { Holding, PortfolioSettings, PortfolioSummary } from '@/types/portfolio';
@@ -200,8 +201,15 @@ const PortfolioPage = () => {
                     {holdings.map((h) => (
                       <Tr key={h.id}>
                         <Td>
-                          <div className="font-semibold text-slate-900">{h.symbol}</div>
-                          <div className="text-xs text-slate-500">{h.name}</div>
+                          <Link
+                            to={`/stocks/${h.symbol.replace('.T', '')}`}
+                            className="-mx-2 block rounded-md px-2 py-1 hover:bg-slate-50"
+                          >
+                            <div className="font-semibold text-brand-600 hover:underline">
+                              {h.symbol}
+                            </div>
+                            <div className="text-xs text-slate-500">{h.name}</div>
+                          </Link>
                         </Td>
                         <Td>
                           <Badge tone={accountTone(h.account_type)}>

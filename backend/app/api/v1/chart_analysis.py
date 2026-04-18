@@ -7,8 +7,32 @@ from typing import Optional
 from app.core.database import get_db
 from app.models.chart_analysis import ChartAnalysis
 from app.schemas.chart_analysis import ChartAnalysisCreate, ChartAnalysisResponse
+from app.services.chart_analysis_service import ChartAnalysisService
 
 router = APIRouter()
+
+
+@router.post(
+    "/{symbol}/generate",
+    response_model=ChartAnalysisResponse,
+    status_code=201,
+)
+async def generate_chart_analysis(
+    symbol: str,
+    timeframe: str = Query("1D", description="時間足（現状は 1D 固定）"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    指標計算 + ヒューリスティックで分析を自動生成し保存する。
+
+    - **symbol**: 銘柄コード（例: 7203）
+    - **timeframe**: 時間足（デフォルト 1D）
+    """
+    service = ChartAnalysisService(db)
+    try:
+        return await service.generate_and_save(symbol, timeframe)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post("", response_model=ChartAnalysisResponse, status_code=201)

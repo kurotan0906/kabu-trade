@@ -87,11 +87,11 @@ const StockDetailPage = () => {
     setChartAnalysisLoading(true);
     setChartAnalysisError(null);
     try {
-      const result = await chartAnalysisApi.getLatest(code);
+      const result = await chartAnalysisApi.generate(code);
       setChartAnalysis(result);
     } catch {
       setChartAnalysisError(
-        '分析結果が見つかりません。Claude Code でチャート分析を実行してください。'
+        'チャート分析の生成に失敗しました（株価データを取得できない可能性があります）。'
       );
     } finally {
       setChartAnalysisLoading(false);
@@ -172,7 +172,7 @@ const StockDetailPage = () => {
                     onClick={handleChartAnalysis}
                     disabled={chartAnalysisLoading}
                   >
-                    {chartAnalysisLoading ? '取得中...' : 'チャート分析を更新'}
+                    {chartAnalysisLoading ? '分析中...' : 'チャートを分析'}
                   </Button>
                 </div>
                 {evaluationError && (
