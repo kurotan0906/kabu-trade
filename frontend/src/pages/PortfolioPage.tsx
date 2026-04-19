@@ -102,6 +102,7 @@ const PortfolioPage = () => {
   const [settings, setSettings] = useState<PortfolioSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [editingHolding, setEditingHolding] = useState<Holding | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const refresh = async () => {
@@ -220,13 +221,22 @@ const PortfolioPage = () => {
                         <Td className="text-right">{formatYen(h.avg_price)}</Td>
                         <Td className="text-right">{formatYen(h.quantity * h.avg_price)}</Td>
                         <Td className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(h.id)}
-                          >
-                            削除
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingHolding(h)}
+                            >
+                              編集
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(h.id)}
+                            >
+                              削除
+                            </Button>
+                          </div>
                         </Td>
                       </Tr>
                     ))}
@@ -244,6 +254,14 @@ const PortfolioPage = () => {
         onClose={() => setAddOpen(false)}
         defaultSymbol=""
         defaultName={null}
+        onSaved={refresh}
+      />
+
+      <HoldingDialog
+        mode="edit"
+        open={editingHolding !== null}
+        onClose={() => setEditingHolding(null)}
+        holding={editingHolding ?? undefined}
         onSaved={refresh}
       />
 
