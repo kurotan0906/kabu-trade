@@ -22,7 +22,7 @@ import {
   CardBody,
   EmptyState,
 } from '@/components/ui';
-import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
+import HoldingDialog from '@/components/portfolio/HoldingDialog';
 
 const StockDetailPage = () => {
   const { code } = useParams<{ code: string }>();
@@ -225,11 +225,12 @@ const StockDetailPage = () => {
       </Tabs>
 
       {currentStock && (
-        <AddHoldingDialog
+        <HoldingDialog
+          mode="create"
           open={addOpen}
           onClose={() => setAddOpen(false)}
-          symbol={currentStock.code}
-          name={currentStock.name ?? null}
+          defaultSymbol={currentStock.code}
+          defaultName={currentStock.name ?? null}
         />
       )}
     </div>
