@@ -33,6 +33,7 @@ class HoldingResponse(HoldingBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    current_price: Optional[float] = None
 
     class Config:
         from_attributes = True

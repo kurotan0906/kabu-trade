@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from typing import Optional, Sequence
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.portfolio import Holding, PortfolioSetting, TradeHistory
@@ -53,17 +53,45 @@ async def _upsert_setting(db: AsyncSession, key: str, value: str):
 
 # ---------- 評価・進捗 ----------
 
+async def _load_latest_prices(db: AsyncSession, symbols: Sequence[str]) -> dict[str, Optional[float]]:
+    """symbol ごとに最新 scored_at の close_price を返す。該当なしは含まない。"""
+    if not symbols:
+        return {}
+    try:
+        latest_subq = (
+            select(StockScore.symbol, func.max(StockScore.scored_at).label("max_at"))
+            .where(StockScore.symbol.in_(list(symbols)))
+            .group_by(StockScore.symbol)
+            .subquery()
+        )
+        stmt = select(StockScore.symbol, StockScore.close_price).join(
+            latest_subq,
+            (StockScore.symbol == latest_subq.c.symbol)
+            & (StockScore.scored_at == latest_subq.c.max_at),
+        )
+        result = await db.execute(stmt)
+        return {row.symbol: row.close_price for row in result.all()}
+    except Exception:
+        return {}
+
+
 async def calc_total_value(db: AsyncSession, holdings: Optional[Sequence[Holding]] = None) -> tuple[float, float]:
-    """(total_value, total_cost) を返す。評価価格は最新 StockScore.per で近似できないため、
-    当面は取得単価ベース（total_value = total_cost）。価格 API との連携は将来対応。
+    """(total_value, total_cost) を返す。
+    total_value は最新の stock_scores.close_price × quantity の合計。
+    close_price が未取得の銘柄は avg_price をフォールバックに使用する。
     """
     if holdings is None:
         result = await db.execute(select(Holding))
         holdings = list(result.scalars().all())
 
-    total_cost = sum(h.quantity * h.avg_price for h in holdings)
-    # StockScore には直近価格が無いため、評価額は暫定的に取得価格に揃える。
-    total_value = total_cost
+    prices = await _load_latest_prices(db, [h.symbol for h in holdings])
+    total_cost = 0.0
+    total_value = 0.0
+    for h in holdings:
+        cost = h.quantity * h.avg_price
+        price = prices.get(h.symbol) or h.avg_price
+        total_cost += cost
+        total_value += h.quantity * price
     return total_value, total_cost
 
 
@@ -119,9 +147,25 @@ async def get_summary(db: AsyncSession) -> dict:
 
 # ---------- CRUD ----------
 
-async def list_holdings(db: AsyncSession) -> list[Holding]:
+async def list_holdings(db: AsyncSession) -> list[dict]:
     result = await db.execute(select(Holding).order_by(Holding.id))
-    return list(result.scalars().all())
+    holdings = list(result.scalars().all())
+    prices = await _load_latest_prices(db, [h.symbol for h in holdings])
+    return [
+        {
+            "id": h.id,
+            "symbol": h.symbol,
+            "name": h.name,
+            "quantity": h.quantity,
+            "avg_price": h.avg_price,
+            "purchase_date": h.purchase_date,
+            "account_type": h.account_type,
+            "created_at": h.created_at,
+            "updated_at": h.updated_at,
+            "current_price": prices.get(h.symbol),
+        }
+        for h in holdings
+    ]
 
 
 async def create_holding(db: AsyncSession, data: dict) -> Holding:
