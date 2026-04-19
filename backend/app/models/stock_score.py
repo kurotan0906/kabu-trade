@@ -29,6 +29,7 @@ class StockScore(Base):
     ma_score = Column(Float, nullable=True)
     rsi_score = Column(Float, nullable=True)
     macd_score = Column(Float, nullable=True)
+    close_price = Column(Float, nullable=True, comment="終値（バッチ取得時点）")
     data_quality = Column(String(20), nullable=False, default="ok", comment="ok/fetch_error/partial")
 
     def __repr__(self):
