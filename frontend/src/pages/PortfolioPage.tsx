@@ -194,7 +194,9 @@ const PortfolioPage = () => {
                       <Th>口座</Th>
                       <Th className="text-right">株数</Th>
                       <Th className="text-right">取得単価</Th>
+                      <Th className="text-right">現在値</Th>
                       <Th className="text-right">取得額</Th>
+                      <Th className="text-right">評価額</Th>
                       <Th></Th>
                     </Tr>
                   </Thead>
@@ -219,7 +221,13 @@ const PortfolioPage = () => {
                         </Td>
                         <Td className="text-right">{h.quantity.toLocaleString()}</Td>
                         <Td className="text-right">{formatYen(h.avg_price)}</Td>
+                        <Td className="text-right">{formatYen(h.current_price)}</Td>
                         <Td className="text-right">{formatYen(h.quantity * h.avg_price)}</Td>
+                        <Td className="text-right">
+                          {h.current_price != null
+                            ? formatYen(h.quantity * h.current_price)
+                            : '—'}
+                        </Td>
                         <Td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button

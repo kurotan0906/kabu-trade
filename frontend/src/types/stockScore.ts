@@ -18,6 +18,7 @@ export interface StockScore {
   ma_score: number | null;
   rsi_score: number | null;
   macd_score: number | null;
+  close_price: number | null;
   data_quality: 'ok' | 'fetch_error' | 'partial';
   profile_score?: number | null;
   profile_name?: string | null;

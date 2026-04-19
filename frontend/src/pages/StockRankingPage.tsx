@@ -23,6 +23,9 @@ import {
 } from '@/components/ui';
 import HoldingDialog from '@/components/portfolio/HoldingDialog';
 
+const formatYen = (v: number | null | undefined) =>
+  v == null ? '—' : `¥${Math.round(v).toLocaleString()}`;
+
 const RATING_TONE: Record<string, 'brand' | 'success' | 'slate' | 'warn' | 'danger'> = {
   '強い買い': 'brand',
   '買い': 'success',
@@ -165,6 +168,7 @@ const StockRankingPage = () => {
                   <Th>テクニカル</Th>
                   <Th>黒点子</Th>
                   <Th>TVシグナル</Th>
+                  <Th className="text-right">現在値</Th>
                   <Th className="text-right">操作</Th>
                 </Tr>
               </Thead>
@@ -225,6 +229,9 @@ const StockRankingPage = () => {
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
+                      </Td>
+                      <Td className="text-right tabular-nums text-slate-700">
+                        {formatYen(s.close_price)}
                       </Td>
                       <Td className="text-right">
                         <div className="flex justify-end gap-2">
@@ -315,6 +322,12 @@ const StockRankingPage = () => {
                             : '—'}
                         </div>
                       </div>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-600">
+                      <span className="text-slate-400">現在値: </span>
+                      <span className="tabular-nums font-semibold text-slate-700">
+                        {formatYen(s.close_price)}
+                      </span>
                     </div>
                     {tvSig && tvSig.recommendation && (
                       <div className="mt-3">

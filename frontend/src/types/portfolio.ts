@@ -10,6 +10,7 @@ export interface Holding {
   account_type: AccountType;
   created_at: string | null;
   updated_at: string | null;
+  current_price: number | null;
 }
 
 export interface HoldingCreate {
