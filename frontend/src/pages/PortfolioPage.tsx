@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { portfolioApi } from '@/services/api/portfolioApi';
-import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
+import HoldingDialog from '@/components/portfolio/HoldingDialog';
 import type { Holding, PortfolioSettings, PortfolioSummary } from '@/types/portfolio';
 import {
   PageHeader,
@@ -238,12 +238,13 @@ const PortfolioPage = () => {
         </div>
       )}
 
-      <AddHoldingDialog
+      <HoldingDialog
+        mode="create"
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        symbol=""
-        name={null}
-        onCreated={refresh}
+        defaultSymbol=""
+        defaultName={null}
+        onSaved={refresh}
       />
 
       <SettingsDialog
