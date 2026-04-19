@@ -21,7 +21,7 @@ import {
   Card,
   CardBody,
 } from '@/components/ui';
-import AddHoldingDialog from '@/components/portfolio/AddHoldingDialog';
+import HoldingDialog from '@/components/portfolio/HoldingDialog';
 
 const RATING_TONE: Record<string, 'brand' | 'success' | 'slate' | 'warn' | 'danger'> = {
   '強い買い': 'brand',
@@ -350,11 +350,12 @@ const StockRankingPage = () => {
       )}
 
       {addTarget && (
-        <AddHoldingDialog
+        <HoldingDialog
+          mode="create"
           open={!!addTarget}
           onClose={() => setAddTarget(null)}
-          symbol={addTarget.symbol}
-          name={addTarget.name}
+          defaultSymbol={addTarget.symbol}
+          defaultName={addTarget.name}
         />
       )}
     </div>
