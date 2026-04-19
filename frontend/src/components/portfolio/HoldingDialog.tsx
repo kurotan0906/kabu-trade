@@ -70,6 +70,10 @@ export const HoldingDialog = ({
       setError('銘柄コード、株数、取得単価を入力してください。');
       return;
     }
+    if (mode === 'edit' && !holding) {
+      setError('編集対象が見つかりません。');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
