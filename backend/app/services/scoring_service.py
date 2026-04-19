@@ -69,6 +69,22 @@ def _fetch_merged_data(symbol: str, source: str) -> Optional[dict]:
     }
 
 
+def _extract_close_from_history(history) -> Optional[float]:
+    """yfinance history (pandas DataFrame) の最新終値を抽出。失敗時 None。"""
+    if history is None:
+        return None
+    try:
+        if hasattr(history, "empty") and history.empty:
+            return None
+        last = history["Close"].iloc[-1]
+        value = float(last)
+        if value != value:  # NaN チェック
+            return None
+        return value
+    except Exception:
+        return None
+
+
 def _get_kurotenko_cached(redis_client, symbol: str) -> Optional[dict]:
     """Redis から kurotenko 評価結果を読む。ヒットしなければ None。"""
     if redis_client is None:
@@ -130,7 +146,10 @@ def _score_symbol(
             kurotenko = evaluate_candidate(symbol)
             _set_kurotenko_cached(redis_client, symbol, kurotenko)
 
-        result = build_stock_result(symbol, name, sector, fundamental, technical, kurotenko)
+        close_price = _extract_close_from_history(data.get("history"))
+        result = build_stock_result(
+            symbol, name, sector, fundamental, technical, kurotenko, close_price=close_price
+        )
         # TV の総合推奨はメタとして保持したいが、StockScore モデル未対応のため捨てる（将来拡張）
         return result
     except Exception as e:
@@ -404,7 +423,10 @@ def _run_batch_scoring_screener(redis_client) -> dict:
                         kurotenko = evaluate_candidate(symbol)
                         _set_kurotenko_cached(redis_client, symbol, kurotenko)
 
-                    result = build_stock_result(symbol, name, market, fundamental, technical, kurotenko)
+                    close_price = _extract_close_from_history(data.get("history"))
+                    result = build_stock_result(
+                        symbol, name, market, fundamental, technical, kurotenko, close_price=close_price
+                    )
                     result["data_quality"] = "yfinance_fallback"
                     session.add(StockScore(**result))
                     processed += 1
@@ -429,7 +451,11 @@ def _run_batch_scoring_screener(redis_client) -> dict:
                         kurotenko = evaluate_candidate(symbol)
                         _set_kurotenko_cached(redis_client, symbol, kurotenko)
 
-                    result = build_stock_result(symbol, name, market, fundamental, technical, kurotenko)
+                    tv_close = tv_row.get("close")
+                    close_price = float(tv_close) if tv_close is not None else None
+                    result = build_stock_result(
+                        symbol, name, market, fundamental, technical, kurotenko, close_price=close_price
+                    )
                     session.add(StockScore(**result))
                     processed += 1
                 except Exception as e:
