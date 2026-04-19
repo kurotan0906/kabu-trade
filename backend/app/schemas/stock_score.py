@@ -25,6 +25,7 @@ class StockScoreResponse(BaseModel):
     ma_score: Optional[float] = None
     rsi_score: Optional[float] = None
     macd_score: Optional[float] = None
+    close_price: Optional[float] = None
     data_quality: str = "ok"
     # プロファイル適用時にのみ埋まる
     profile_score: Optional[float] = None

@@ -23,6 +23,7 @@ def build_stock_result(
     fundamental: dict,
     technical: dict,
     kurotenko: Optional[dict] = None,
+    close_price: Optional[float] = None,
 ) -> dict:
     """各スコアを統合して stock_scores レコード用の dict を返す。"""
     total = fundamental["fundamental_score"] + technical["technical_score"]
@@ -54,5 +55,6 @@ def build_stock_result(
         "ma_score": technical.get("ma_score"),
         "rsi_score": technical.get("rsi_score"),
         "macd_score": technical.get("macd_score"),
+        "close_price": close_price,
         "data_quality": fundamental.get("data_quality", "ok"),
     }
