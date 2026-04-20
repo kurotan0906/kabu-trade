@@ -20,6 +20,7 @@ from app.models.stock_price import StockPrice  # noqa: F401
 from app.models.evaluation import Evaluation  # noqa: F401
 from app.models.investment_strategy import InvestmentStrategy  # noqa: F401
 from app.models.key_point import KeyPoint  # noqa: F401
+from app.models.paper_trade import PaperAccount, PaperHolding, PaperTrade  # noqa: F401
 
 # Set target metadata
 target_metadata = Base.metadata
