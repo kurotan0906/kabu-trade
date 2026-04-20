@@ -100,3 +100,4 @@ ss500725.pub
 
 # Superpowers brainstorm session cache (temporary, regenerable)
 .superpowers/
+.worktrees/
