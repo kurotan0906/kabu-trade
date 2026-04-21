@@ -52,7 +52,7 @@ class StockService:
         Returns:
             StockInfo: 銘柄情報
         """
-        cache_key = f"stock:{code}:info"
+        cache_key = f"stock:{code}:info:v2"
 
         # キャッシュ確認
         if use_cache:
@@ -117,7 +117,9 @@ class StockService:
                     per=score.per,
                     pbr=score.pbr,
                 )
-                await self._set_cache(cache_key, stock_info.dict(), ttl=3600)
+                # close_price があればキャッシュ、なければキャッシュしない（次回バッチ後に反映）
+                if stock_info.current_price is not None:
+                    await self._set_cache(cache_key, stock_info.dict(), ttl=3600)
                 return stock_info
         except Exception:
             pass
