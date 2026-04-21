@@ -120,6 +120,10 @@ app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["portfoli
 from app.api.v1 import advisor
 app.include_router(advisor.router, prefix="/api/v1/advisor", tags=["advisor"])
 
+# ペーパートレード API
+from app.api.v1 import paper_trade
+app.include_router(paper_trade.router, prefix="/api/v1/paper-trade", tags=["paper-trade"])
+
 # 将来の拡張用
 # from app.api.v1 import strategies
 # app.include_router(strategies.router, prefix="/api/v1/strategies", tags=["strategies"])
