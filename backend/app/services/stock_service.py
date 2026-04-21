@@ -113,7 +113,7 @@ class StockService:
                     name=score.name or code,
                     sector=score.sector,
                     market_cap=None,
-                    current_price=None,
+                    current_price=Decimal(str(score.close_price)) if score.close_price else None,
                     per=score.per,
                     pbr=score.pbr,
                 )
