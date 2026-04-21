@@ -83,9 +83,19 @@ const AssetChart = ({ data }: SimpleChartProps) => {
             </text>
           );
         })}
-        <path d={path('total_value')} fill="none" stroke="#2563eb" strokeWidth="2" />
-        <path d={path('holdings_value')} fill="none" stroke="#10b981" strokeWidth="1.5" />
-        <path d={path('cash')} fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+        {data.length === 1 ? (
+          <>
+            <circle cx={xScale(0)} cy={yScale(data[0].total_value)} r="4" fill="#2563eb" />
+            <circle cx={xScale(0)} cy={yScale(data[0].holdings_value)} r="3" fill="#10b981" />
+            <circle cx={xScale(0)} cy={yScale(data[0].cash)} r="3" fill="#94a3b8" />
+          </>
+        ) : (
+          <>
+            <path d={path('total_value')} fill="none" stroke="#2563eb" strokeWidth="2" />
+            <path d={path('holdings_value')} fill="none" stroke="#10b981" strokeWidth="1.5" />
+            <path d={path('cash')} fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+          </>
+        )}
         <g transform={`translate(${pad.l + 10}, ${pad.t + 6})`}>
           <rect width="14" height="2" y="5" fill="#2563eb" />
           <text x="18" y="9" fill="#475569" fontSize="11">総資産</text>
