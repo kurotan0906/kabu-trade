@@ -23,6 +23,8 @@ import {
   EmptyState,
 } from '@/components/ui';
 import HoldingDialog from '@/components/portfolio/HoldingDialog';
+import PaperTradeBuyButton from '@/components/paper-trade/PaperTradeBuyButton';
+import PaperTradeSellButton from '@/components/paper-trade/PaperTradeSellButton';
 
 const StockDetailPage = () => {
   const { code } = useParams<{ code: string }>();
@@ -140,9 +142,13 @@ const StockDetailPage = () => {
         title={`${currentStock.name ?? ''} (${currentStock.code})`}
         description="スコア・チャート・多軸分析を確認できます。"
         actions={
-          <Button variant="accent" onClick={() => setAddOpen(true)}>
-            ポートフォリオに追加
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setAddOpen(true)}>
+              ポートフォリオに追加
+            </Button>
+            <PaperTradeBuyButton symbol={`${code}.T`} name={currentStock.name} size="md" />
+            <PaperTradeSellButton symbol={`${code}.T`} size="md" />
+          </div>
         }
       />
 

@@ -22,6 +22,7 @@ import {
   CardBody,
 } from '@/components/ui';
 import HoldingDialog from '@/components/portfolio/HoldingDialog';
+import PaperTradeBuyButton from '@/components/paper-trade/PaperTradeBuyButton';
 
 const formatYen = (v: number | null | undefined) =>
   v == null ? '—' : `¥${Math.round(v).toLocaleString()}`;
@@ -246,13 +247,14 @@ const StockRankingPage = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="accent"
+                            variant="secondary"
                             onClick={() =>
                               setAddTarget({ symbol: s.symbol, name: s.name })
                             }
                           >
                             追加
                           </Button>
+                          <PaperTradeBuyButton symbol={s.symbol} name={s.name} />
                         </div>
                       </Td>
                     </Tr>
@@ -347,12 +349,13 @@ const StockRankingPage = () => {
                       </Button>
                       <Button
                         size="sm"
-                        variant="accent"
+                        variant="secondary"
                         className="flex-1"
                         onClick={() => setAddTarget({ symbol: s.symbol, name: s.name })}
                       >
                         追加
                       </Button>
+                      <PaperTradeBuyButton symbol={s.symbol} name={s.name} className="flex-1" />
                     </div>
                   </CardBody>
                 </Card>
