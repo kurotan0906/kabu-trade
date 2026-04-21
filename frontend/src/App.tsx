@@ -5,6 +5,8 @@ import StockRankingPage from './pages/StockRankingPage'
 import PortfolioPage from './pages/PortfolioPage'
 import SimulatorPage from './pages/SimulatorPage'
 import AnalysisHistoryPage from './pages/AnalysisHistoryPage'
+import PaperTradePage from './pages/PaperTradePage'
+import PaperTradeSymbolPage from './pages/PaperTradeSymbolPage'
 import { AppShell } from './components/layout/AppShell'
 import './App.css'
 
@@ -19,6 +21,8 @@ function App() {
           <Route path="/simulator" element={<SimulatorPage />} />
           <Route path="/history" element={<AnalysisHistoryPage />} />
           <Route path="/stocks/:code" element={<StockDetailPage />} />
+          <Route path="/paper-trade" element={<PaperTradePage />} />
+          <Route path="/paper-trade/symbols/:symbol" element={<PaperTradeSymbolPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
