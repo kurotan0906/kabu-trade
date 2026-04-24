@@ -82,6 +82,9 @@ const PaperTradeSymbolPage = () => {
             <Link to="/paper-trade">
               <Button variant="ghost" size="sm">← 戻る</Button>
             </Link>
+            <Link to={`/stocks/${symbol.replace(/\.T$/i, '')}`}>
+              <Button variant="secondary" size="sm">銘柄詳細を見る</Button>
+            </Link>
             <IndicatorSelector
               registry={INDICATORS}
               visibleIds={visibleIds}

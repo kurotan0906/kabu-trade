@@ -454,6 +454,23 @@ async def _load_stock_prices(
     return [(r.stock_code, r.date, float(r.close)) for r in result.all()]
 
 
+async def _load_or_fetch_prices(
+    db: AsyncSession,
+    symbol: str,
+    from_date: date,
+    to_date: date,
+) -> list[tuple[str, date, float]]:
+    """DB になければ yfinance で取得して DB に保存してから返す。"""
+    rows = await _load_stock_prices(db, [symbol], from_date, to_date)
+    if rows:
+        return rows
+    from app.services.stock_service import StockService
+    svc_prices = await StockService(db).get_stock_prices(
+        symbol, start_date=from_date, end_date=to_date, use_cache=False
+    )
+    return [(symbol, p.date, float(p.close)) for p in svc_prices]
+
+
 async def reconstruct_chart(
     db: AsyncSession,
     from_date: Optional[date] = None,
@@ -745,8 +762,8 @@ async def get_symbol_analytics(
         mae: Optional[float] = None
         if current_price is not None:
             entry_day = open_info["entry_date"].date()
-            price_rows = await _load_stock_prices(
-                db, [symbol], entry_day - timedelta(days=30), date.today()
+            price_rows = await _load_or_fetch_prices(
+                db, symbol, entry_day - timedelta(days=30), date.today()
             )
             lookup = build_close_lookup(price_rows)
             cursor = entry_day
@@ -778,7 +795,7 @@ async def get_symbol_analytics(
     # タイミング
     start_day = from_date or (db_trades[0].executed_at.date())
     end_day = to_date or date.today()
-    price_rows_timing = await _load_stock_prices(db, [symbol], start_day, end_day)
+    price_rows_timing = await _load_or_fetch_prices(db, symbol, start_day, end_day)
     timing_prices = sorted(price_rows_timing, key=lambda r: r[1])
     price_series = [{"date": d, "close": c} for (_, d, c) in timing_prices]
     trade_markers = [

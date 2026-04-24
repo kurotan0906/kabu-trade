@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useStockStore } from '@/store/stockStore';
 import StockInfo from '@/components/stock/StockInfo';
 import StockChart from '@/components/stock/StockChart';
@@ -143,6 +143,9 @@ const StockDetailPage = () => {
         description="スコア・チャート・多軸分析を確認できます。"
         actions={
           <div className="flex gap-2">
+            <Link to={`/paper-trade/symbols/${code}.T`}>
+              <Button variant="ghost" size="sm">売買分析</Button>
+            </Link>
             <Button variant="secondary" onClick={() => setAddOpen(true)}>
               ポートフォリオに追加
             </Button>
